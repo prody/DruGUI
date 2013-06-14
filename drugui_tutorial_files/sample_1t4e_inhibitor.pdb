@@ -1,0 +1,77 @@
+HEADER    LIGASE
+REMARK  99 MOE v2008.1 (Chemical Computing Group Inc)  Tue Jun 16 11:55:21 2009
+HELIX    1   1 ALA A   21  GLN A   24  1                                   4
+HELIX    2   2 PRO A   32  VAL A   41  1                                  10
+HELIX    3   3 MET A   50  LYS A   64  1                                  15
+HELIX    4   4 LEU A   81  PHE A   86  1                                   6
+HELIX    5   5 HIS A   96  ASN A  106  1                                  11
+SHEET    1   1 1 VAL A  28  PRO A  30  0
+SHEET    2   2 1 ILE A  74  TYR A  76  0
+SHEET    3   3 1 SER A  90  SER A  92  0
+SHEET    4   4 1 LEU A 107  VAL A 109  0
+TER     785      ASN A 111
+HETATM  786 CL1  DIZ A 112       6.949   5.694  -2.674  1.00 23.67          Cl
+HETATM  787  C1  DIZ A 112       6.335   6.043  -4.225  1.00 19.71           C
+HETATM  788  C2  DIZ A 112       6.450   5.071  -5.244  1.00 20.30           C
+HETATM  789  C3  DIZ A 112       5.919   5.327  -6.527  1.00 20.35           C
+HETATM  790  C4  DIZ A 112       5.255   6.583  -6.816  1.00 19.96           C
+HETATM  791  C5  DIZ A 112       5.171   7.560  -5.768  1.00 19.16           C
+HETATM  792  C6  DIZ A 112       5.710   7.286  -4.477  1.00 19.05           C
+HETATM  793  C7  DIZ A 112       4.599   6.871  -8.181  1.00 19.88           C
+HETATM  794  C8  DIZ A 112       5.291   6.211  -9.397  1.00 19.11           C
+HETATM  795  O1  DIZ A 112       6.470   6.297  -9.683  1.00 19.82           O
+HETATM  796  O2  DIZ A 112       4.461   5.483 -10.175  1.00 19.25           O
+HETATM  797  N1  DIZ A 112       3.092   6.512  -8.056  1.00 20.21           N
+HETATM  798  C9  DIZ A 112       2.178   7.522  -8.394  1.00 19.90           C
+HETATM  799  O3  DIZ A 112       2.552   8.641  -8.785  1.00 18.53           O
+HETATM  800  C10 DIZ A 112       0.720   7.313  -8.291  1.00 20.59           C
+HETATM  801  C11 DIZ A 112      -0.007   8.424  -7.825  1.00 21.46           C
+HETATM  802  C12 DIZ A 112      -1.388   8.350  -7.666  1.00 22.62           C
+HETATM  803  I1  DIZ A 112      -2.345  10.015  -6.985  1.00 28.56           I
+HETATM  804  C13 DIZ A 112      -2.095   7.168  -7.958  1.00 21.39           C
+HETATM  805  C14 DIZ A 112      -1.372   6.033  -8.431  1.00 21.18           C
+HETATM  806  C15 DIZ A 112       0.046   6.097  -8.602  1.00 21.13           C
+HETATM  807  N2  DIZ A 112       0.661   4.929  -9.056  1.00 20.55           N
+HETATM  808  C16 DIZ A 112       1.868   4.401  -8.654  1.00 21.76           C
+HETATM  809  O4  DIZ A 112       2.249   3.346  -9.166  1.00 24.87           O
+HETATM  810  C17 DIZ A 112       2.744   5.114  -7.565  1.00 21.19           C
+HETATM  811  C18 DIZ A 112       2.170   4.946  -6.109  1.00 21.92           C
+HETATM  812  C19 DIZ A 112       2.500   5.866  -5.082  1.00 22.07           C
+HETATM  813  C20 DIZ A 112       2.043   5.741  -3.767  1.00 22.59           C
+HETATM  814  C21 DIZ A 112       1.235   4.676  -3.429  1.00 20.71           C
+HETATM  815 CL2  DIZ A 112       0.739   4.542  -1.835  1.00 21.93          Cl
+HETATM  816  C22 DIZ A 112       0.848   3.723  -4.392  1.00 22.54           C
+HETATM  817  C23 DIZ A 112       1.315   3.858  -5.734  1.00 22.97           C
+CONECT  787  786  788  792
+CONECT  800  798  801  806
+CONECT  801  800  802
+CONECT  802  801  803  804
+CONECT  804  802  805
+CONECT  805  804  806
+CONECT  806  800  805  807
+CONECT  808  807  809  810
+CONECT  810  797  808  811
+CONECT  811  810  812  817
+CONECT  812  811  813
+CONECT  788  787  789
+CONECT  813  812  814
+CONECT  814  813  815  816
+CONECT  816  814  817
+CONECT  817  811  816
+CONECT  789  788  790
+CONECT  790  789  791  793
+CONECT  791  790  792
+CONECT  792  787  791
+CONECT  793  790  794  797
+CONECT  794  793  795  796
+CONECT  798  797  799  800
+CONECT  786  787
+CONECT  815  814
+CONECT  803  802
+CONECT  797  793  798  810
+CONECT  807  806  808
+CONECT  795  794
+CONECT  796  794
+CONECT  799  798
+CONECT  809  808
+END

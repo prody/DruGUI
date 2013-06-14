@@ -61,7 +61,7 @@ druggable site and solutions therein. You can toggle displayed molecules
 to see locations of different sites and solutions.
 
 .. figure:: _static/siteone.png
-   :scale: 80%
+   :scale: 60%
 
 Figure shows the best solution for protein MDM2. The maximal achievable
 affinity (druggability index) for this solution is 0.3 nM or, in terms

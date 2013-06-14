@@ -1,5 +1,6 @@
 112K  mdm2.pdb
 335K  mdm2.psf
+3.9K  sample_1t4e_inhibitor.pdb
 2.2M  sample_ACAM.dx
 2.2M  sample_ACET.dx
 4.5K  sample_all_hotspots.pdb

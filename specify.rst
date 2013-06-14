@@ -3,9 +3,8 @@
 Analyze a Specific Site
 =======================
 
-Weakly druggable sites can be missed in druggability analysis step. Or,
-a site of interest might be partly identified. Druggability of a specific
-site can be calculated using the following interface:
+This interface can be used to select probe binding hotspots that overlap
+with a given ligand. :
 
 .. figure:: _static/gui_specify.png
    :scale: 80%
@@ -32,8 +31,27 @@ Options & Parameters
 2. GUI will try to locate Python executable path, but if you do not see an
    entry, you will need to specify it manually.
 
+
+When you use the tutorial files for MDM2 inhibitor, you should get a
+representation similar to the following:
+
+.. figure:: _static/specified.png
+   :scale: 80%
+
+
+In the figure, 11 probe binding spots that overlap with MDM2 inhibitor is
+selected.  Sum of their binding free energies looks reasonable (this will
+be displayed in the logfile viewer). For a large ligand, however, you may
+end up with a large selection of probe binding spots and sum of their
+binding free energies may result in a very high affinity. If this is the
+case, you should disregard the total. The approach (merging probe binding
+spots and adding their binding free energies) works well for drug-size
+molecules.
+
+
 Output Files
 ------------
 
 Output from this step is a set of PDB files written into :file:`prefix`
-and the druggability of sites specified by ligands.
+folder. Binding free energies of selected probe binding spots will
+be appended to the log file in this folder.
