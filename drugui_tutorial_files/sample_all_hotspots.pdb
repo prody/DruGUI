@@ -1,0 +1,58 @@
+REMARK Hotspots are sorted according to their binding free energies in ascending order.
+REMARK Bindiing free energies are written in b-factor column.
+REMARK Each hotspot is represented by the probe type that is most frequently observed at its location.
+REMARK Residue names correspond to so selected probe type.
+REMARK Occupancy values are the fraction of frames that the was occupied by the most frequent probe type at that location.
+REMARK Cluster numbers are written to residue numbers column.
+REMARK Single-linkage clustering cutoff was 5.5A.
+ATOM      1  C2  IPROA   1       1.500   8.500   6.000  1.00 -2.73           C
+ATOM      2  C2  IPROA   2       2.500   5.000  -5.000  1.00 -2.36           C
+ATOM      3  C2  ACETA   3       9.000   1.000  11.000  0.95 -2.34           C
+ATOM      4  C2  IPROA   2      -2.000   8.500  -7.500  1.00 -2.33           C
+ATOM      5  C2  IPROA   4     -11.000  -2.500  -6.500  0.93 -2.28           C
+ATOM      6  C2  IPROA   2       7.000   5.500  -3.500  0.99 -2.23           C
+ATOM      7  C2  IPROA   1       5.500   7.500   9.500  0.95 -2.19           C
+ATOM      8  C2  IPROA   5      13.500  -5.000   0.500  0.99 -2.13           C
+ATOM      9  C2  IPROA   6      -3.000  16.000   3.500  0.97 -2.13           C
+ATOM     10  C2  IPROA   7      -3.500 -13.500  -2.000  0.85 -2.02           C
+ATOM     11  C2  IPAMA   8      -9.500   6.000  10.000  0.84 -2.00           C
+ATOM     12  C2  IPROA   2       0.000   3.500 -11.500  0.93 -1.98           C
+ATOM     13  C2  IPROA   2       6.500   2.000  -9.000  0.97 -1.91           C
+ATOM     14  C2  IPROA   9      -6.500 -12.500   4.000  0.81 -1.89           C
+ATOM     15  C2  IPROA  10       6.000  -4.000 -12.000  0.95 -1.85           C
+ATOM     16  C2  IPROA   2      12.000   0.000  -5.000  0.82 -1.79           C
+ATOM     17  C2  IPROA   2      13.000   2.000   6.500  0.98 -1.75           C
+ATOM     18  C2  IPROA   2      13.000   6.500  -1.000  0.99 -1.72           C
+ATOM     19  C2  ACETA  11     -11.500  -9.500   0.000  0.46 -1.70           C
+ATOM     20  C2  IPROA  12      -8.000  -9.000   8.500  0.64 -1.56           C
+ATOM     21  C2  ACETA   1       0.500  13.000   7.000  0.80 -1.53           C
+ATOM     22  C2  IPROA   1      10.500   9.000   8.500  0.96 -1.44           C
+ATOM     23  C2  IPROA  10       3.000  -6.000 -12.000  0.87 -1.40           C
+ATOM     24  C2  ACETA  13     -10.000   7.000 -13.500  0.50 -1.36           C
+ATOM     25  C2  ACETA  13     -11.500   4.500 -13.500  0.80 -1.30           C
+ATOM     26  C2  IPROA  14     -11.500  14.000   5.500  0.72 -1.30           C
+ATOM     27  C2  IPROA  15       2.000 -13.500   7.500  0.54 -1.27           C
+ATOM     28  C2  ACETA  15      -0.500 -14.500   6.000  0.88 -1.26           C
+ATOM     29  C2  ACETA  16      10.500  13.000   1.000  0.78 -1.26           C
+ATOM     30  C2  IPROA  17      -6.500   1.000 -14.000  0.90 -1.25           C
+ATOM     31  C2  IPROA   2       4.000   3.500  -9.000  0.98 -1.24           C
+ATOM     32  C2  IPROA  17      -8.000  -3.500 -11.500  0.84 -1.23           C
+ATOM     33  C2  IPAMA  18     -13.500   0.500   7.500  0.86 -1.23           C
+ATOM     34  C2  IPROA  19       0.000   7.000  11.500  0.94 -1.21           C
+ATOM     35  C2  IPROA  20      10.000 -15.000   2.000  0.90 -1.20           C
+ATOM     36  C2  IPROA   2      10.500   1.500  -6.500  0.90 -1.15           C
+ATOM     37  C2  IPROA   2      13.500   4.000   4.500  0.89 -1.14           C
+ATOM     38  C2  IPROA  21       4.000  12.500  -8.000  0.95 -1.13           C
+ATOM     39  C2  ACETA  15       0.000 -17.000   7.000  0.99 -1.11           C
+ATOM     40  C2  IPROA  17      -5.000  -5.000 -12.000  0.97 -1.10           C
+ATOM     41  C2  IPROA  22      -1.500   0.500  11.000  0.86 -1.09           C
+ATOM     42  C2  IPROA   2      14.500   5.500   1.000  1.00 -1.08           C
+ATOM     43  C2  IPROA   2      -2.500  11.000  -8.000  1.00 -1.08           C
+ATOM     44  C2  IPROA   2      -4.000  10.500 -12.000  0.97 -1.08           C
+ATOM     45  C2  IPAMA  23      11.500  -7.000   5.500  0.56 -1.08           C
+ATOM     46  C2  IPROA   2       9.500   5.000  -4.000  0.98 -1.06           C
+ATOM     47  C2  ACETA  24      13.500 -12.000  -8.000  0.86 -1.06           C
+ATOM     48  C2  IPROA  25      -8.000 -13.000  -5.500  0.97 -1.05           C
+ATOM     49  C2  IPROA   2      -0.500   6.500  -8.500  1.00 -1.03           C
+ATOM     50  C2  IPROA  17      -4.000  -8.500 -11.500  0.87 -1.01           C
+ATOM     51  C2  IPROA  11     -10.000 -11.500  -0.500  0.86 -1.01           C

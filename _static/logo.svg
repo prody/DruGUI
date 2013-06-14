@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.2"
+   width="644.65546"
+   height="141.21584"
+   id="svg2"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="logo.svg"
+   inkscape:export-filename="/home/abakan/Code/druggability/drugui/_static/logo.png"
+   inkscape:export-xdpi="90.733284"
+   inkscape:export-ydpi="90.733284">
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1364"
+     inkscape:window-height="810"
+     id="namedview13"
+     showgrid="false"
+     inkscape:zoom="1.4127757"
+     inkscape:cx="371.354"
+     inkscape:cy="102.80338"
+     inkscape:window-x="402"
+     inkscape:window-y="244"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1-1" />
+  <defs
+     id="defs4" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(-52.597061,-217.19371)"
+     id="layer1">
+    <g
+       transform="translate(-134.58194,230.00987)"
+       id="layer1-1">
+      <text
+         x="307.14502"
+         y="75.859909"
+         id="text2909"
+         xml:space="preserve"
+         style="font-size:96px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#002255;fill-opacity:1;stroke:none;font-family:Purisa;-inkscape-font-specification:Purisa Bold"
+         sodipodi:linespacing="125%"><tspan
+           x="307.14502"
+           y="75.859909"
+           id="tspan2911"
+           style="font-size:96px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#002255;font-family:Purisa;-inkscape-font-specification:Purisa Bold">DruGUI</tspan></text>
+      <text
+         x="327.77826"
+         y="119.59238"
+         id="text3659"
+         xml:space="preserve"
+         style="font-size:24px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#803300;fill-opacity:1;stroke:none;font-family:Purisa;-inkscape-font-specification:Purisa Bold"
+         sodipodi:linespacing="100%"><tspan
+           x="327.77826"
+           y="119.59238"
+           id="tspan3663"
+           style="font-size:24px;word-spacing:-6px">Druggability Suite for VMD</tspan></text>
+      <image
+         y="-6.5978122"
+         x="188.23701"
+         id="image3031"
+         xlink:href="file:///home/abakan/Code/druggability/drugui/_static/logo_mdm2.png"
+         width="126.94262"
+         height="134.19649" />
+    </g>
+  </g>
+</svg>
