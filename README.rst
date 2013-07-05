@@ -2,9 +2,11 @@ DruGUI
 ======
 
 Druggability Suite is a `VMD`_ plugin GUI and a Python module developed
-for setup and analysis of simulations described in [AB12]_.
+for setup and analysis of simulations described in [AB12]_. See `DruGUI`_
+tutorial for installation and usage instructions.
 
 .. _VMD: http://www.ks.uiuc.edu/Research/vmd/
+.. _DruGUI: http://ahmetbakan.com/DruGUI
 
 .. [AB12] Bakan A, Nevins N, Lakdawala AS, Bahar I `Druggability Assessment of
    Allosteric Proteins by Dynamics Simulations in the Presence of Probe
