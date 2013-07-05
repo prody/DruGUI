@@ -44,7 +44,7 @@ energy.
 
 Binding free energies of probes can be found in the logfile:
 
-.. literalinclude:: _static/sample.log
+.. literalinclude:: drugui_tutorial_files/sample.log
 
 
 Logfile lists all probe binding spots, their binding free energies,

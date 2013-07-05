@@ -25,7 +25,8 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.pngmath']
+extensions = ['sphinx.ext.pngmath',
+              'sphinxcontrib.googleanalytics',]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -239,3 +240,6 @@ texinfo_documents = [
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 #texinfo_show_urls = 'footnote'
+
+googleanalytics_enabled = True
+googleanalytics_id = 'UA-38958720-1'
