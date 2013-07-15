@@ -244,31 +244,38 @@ proc druggability::Load_results {} {
       if {$beta > $betamax} {set betamax $beta}
     }
 
-    set n_sites [expr [llength [glob [string range $pdb_hotspots 0 [expr [string length $pdb_hotspots] -17]]site*.pdb]] - \
-                      [llength [glob [string range $pdb_hotspots 0 [expr [string length $pdb_hotspots] -17]]site*_soln_*.pdb]] ]
+    set n_sites [expr [llength [glob -nocomplain [string range $pdb_hotspots 0 [expr [string length $pdb_hotspots] -17]]site*.pdb]] - \
+                      [llength [glob -nocomplain [string range $pdb_hotspots 0 [expr [string length $pdb_hotspots] -17]]site*_soln_*.pdb]] ]
 
-    for {set i 1} {$i <= $n_sites} {incr i} {
 
-      if {[llength [glob [string range $pdb_hotspots 0 [expr [string length $pdb_hotspots] -17]]site_$i\*.pdb]] > 1} {
-        set filelist [lsort [glob [string range $pdb_hotspots 0 \
-                                [expr [string length $pdb_hotspots] -17]]site_$i\_*.pdb]]
-        foreach site $filelist {
-          set hotid [mol new $site]
-          mol modstyle 0 $hotid DynamicBonds $dia_merge_radius 0.3 $resol
-          mol modcolor 0 $hotid Molecule
-          mol addrep $hotid
-          mol modstyle 1 $hotid VDW 0.4 $resol
-          mol modcolor 1 $hotid Beta
-          mol modmaterial 1 $hotid Opaque
-          mol scaleminmax $hotid 1 $betamin $betamax
-          mol addrep $hotid
-          mol modstyle 2 $hotid VDW $probe_radius_scale $resol
-          mol modcolor 2 $hotid Beta
-          mol modmaterial 2 $hotid Transparent
-          mol scaleminmax $hotid 2 $betamin $betamax
-          mol off $hotid
+    if ($n_sites) {
+      for {set i 1} {$i <= $n_sites} {incr i} {
+
+        if {[llength [glob -nocomplain [string range $pdb_hotspots 0 [expr [string length $pdb_hotspots] -17]]site_$i\*.pdb]] > 1} {
+          set filelist [lsort [glob -nocomplain [string range $pdb_hotspots 0 \
+                                  [expr [string length $pdb_hotspots] -17]]site_$i\_*.pdb]]
+          foreach site $filelist {
+            set hotid [mol new $site]
+            mol modstyle 0 $hotid DynamicBonds $dia_merge_radius 0.3 $resol
+            mol modcolor 0 $hotid Molecule
+            mol addrep $hotid
+            mol modstyle 1 $hotid VDW 0.4 $resol
+            mol modcolor 1 $hotid Beta
+            mol modmaterial 1 $hotid Opaque
+            mol scaleminmax $hotid 1 $betamin $betamax
+            mol addrep $hotid
+            mol modstyle 2 $hotid VDW $probe_radius_scale $resol
+            mol modcolor 2 $hotid Beta
+            mol modmaterial 2 $hotid Transparent
+            mol scaleminmax $hotid 2 $betamin $betamax
+            mol off $hotid
+          }
         }
       }
+    } else {
+      tk_messageBox -type ok -title "WARNING" \
+        -message "No druggable sites were identified."
+      return 0
     }
   }
 
