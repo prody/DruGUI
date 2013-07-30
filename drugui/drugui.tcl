@@ -1897,8 +1897,8 @@ proc ::druggability::Process_system {} {
 
   # 6) wrap solvent molecules back into the box
   #   This selection tells PBCtools to wrap SOLVENT and ION secments
-    pbc wrap -molid top -first 1 -last last -sel "segid XXX ION \"WT.*\"" \
-      -compound res -center origin
+    # pbc wrap -molid top -first 1 -last last -sel "segid XXX PROB ION \"WT.*\" or water or ion"
+    pbc wrap -molid top -first 1 -last last -sel "all" -compound fragment -center origin
     puts $log_file "Trajectory: Solvent and probe molecules out of the original simulation box have been wrapped."
   }
 
@@ -1922,7 +1922,7 @@ proc ::druggability::Process_system {} {
   puts $log_file "Trajectory: Alignment is complete."
 
   # 5) write heavy atoms excluding WT* ION and XXX segments
-  set protein [atomselect top "noh and not water and not segid XXX ION \"WT.*\"" frame 0]
+  set protein [atomselect top "noh and not water and not segid XXX PROB ION \"WT.*\"" frame 0]
   $protein writepdb [file join $outputdir "$prefix\_heavyatoms.pdb"]
   puts $log_file "Output: System heavy atoms are written into file $prefix\_heavyatoms.pdb."
 
