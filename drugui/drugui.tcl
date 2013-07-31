@@ -193,7 +193,7 @@ proc druggability::Load_results {} {
     mol addrep $simid
     mol modstyle 2 $simid Licorice 0.3 $resol $resol
     mol modcolor 2 $simid Name
-    mol modselect 2 $simid "noh resname PRO2 IPRO IBUT IPAM ACET ACTT ACAM and same residue as within 3 of protein"
+    mol modselect 2 $simid "noh resname PRO2 IPRO IBUT IBTN IPAM ACET ACTT ACAM and same residue as within 3 of protein"
     mol selupdate 2 $simid on
     mol smoothrep $simid 2 2
     mol top $simid
@@ -1444,14 +1444,19 @@ filenames. Naming should be similar to systemname_probetype.dx, e.g. default_IPR
 
             #foreach probe_type "IPRO ipro PRO2 pro2 IPAM ipam IBUT ibut ACET acet ACAM acam"
 
-            foreach probe_type "IPRO PRO2 IPAM IBUT ACET ACAM" {
+            foreach probe_type "IPRO PRO2 IPAM IBUT IBTN ACET ACTT ACAM" {
               if { [string first $probe_type $filename] > -1} {
                 set recognized 1
                 set probe_type_fn $probe_type
                 set probe_type [string toupper $probe_type]
                 if {$probe_type == "PRO2"} {
                   set probe_type "IPRO"
+                } elseif {$probe_type == "IBTN"} {
+                  set probe_type "IBUT"
+                } elseif {$probe_type == "ACTT"} {
+                  set probe_type "ACET"
                 }
+
                 set notadded 1
                 #if {[lsearch $::druggability::grid_list "$probe_type $tempfile"] > -1}
                 foreach temp $::druggability::grid_list {
@@ -1941,7 +1946,7 @@ proc ::druggability::Process_system {} {
     puts $log_file "Trajectory: Protein trajectory is saved as $prefix\_protein_aligned.dcd."
   }
 
-  if {$use_volmap && [[atomselect top "resname IPRO PRO2 IBUT IPAM ACAM ACET ACTT"] num]} {
+  if {$use_volmap && [[atomselect top "resname IPRO PRO2 IBUT IBTN IPAM ACAM ACET ACTT"] num]} {
     #   Determine the size of the system
     set selWater [atomselect top "water" frame 0]
     set minmaxW [measure minmax $selWater]
@@ -1967,27 +1972,24 @@ proc ::druggability::Process_system {} {
     animate delete beg 0 end 0 $sysid
     animate goto start
     set grid_list [list]
-    foreach resname "IPRO PRO2 IBUT IPAM ACAM ACET ACTT" {
+    foreach resname {"IPRO PRO2" "IBUT IBTN" "IPAM" "ACAM" "ACET ACTT"} {
       if {[[atomselect top "resname $resname"] num] > 0} {
         #volmap occupancy [atomselect top "resname $resname and name C2 and same residue as within 4 of protein"] -points -allframes -res 0.5 -combine avg -minmax [measure minmax $selWater] -checkpoint 0 -o $prefix\_$resname\_within.dx
         set moveback 0
         if {[[atomselect top "resname $resname and name C2 and same residue as (exwithin $probe_contact_dist of protein)"] num] == 0} {
           set moveback 1
-          puts $log_file "Technical: No $resname interacting the protein is found in the first snapshot."
-          puts $log_file "Technical: One $resname molecule is moved to the center."
           set movetocenter [atomselect top "resname $resname and name C2"]
           set movetocenter [atomselect top "index [lindex [$movetocenter get index] 0]"]
           set movelocation [measure center $movetocenter]
           set movetocenter [atomselect top "same residue as index [lindex [$movetocenter get index] 0]"]
           $movetocenter moveby [vecmul {-1 -1 -1} $movelocation]
         }
-        volmap occupancy [atomselect top "resname $resname and name C2 and same residue as (exwithin $probe_contact_dist of protein)"] -points -allframes -res $grid_spacing -combine avg -minmax $minmaxW -checkpoint 0 -o [file join "$outputdir" "$prefix\_$resname.dx"]
+        volmap occupancy [atomselect top "resname $resname and name C2 and same residue as (exwithin $probe_contact_dist of protein)"] -points -allframes -res $grid_spacing -combine avg -minmax $minmaxW -checkpoint 0 -o [file join "$outputdir" "$prefix\_[lindex $resname 0].dx"]
         if {$moveback} {
-          puts $log_file "Technical: $resname molecule is moved back to its location."
           $movetocenter moveby $movelocation
         }
-        puts $log_file "Grid: Grid file for $resname is written as $prefix\_$resname.dx."
-        lappend grid_list "$resname $prefix\_$resname.dx"
+        puts $log_file "Grid: Grid file for [lindex $resname 0] is written as $prefix\_[lindex $resname 0].dx."
+        lappend grid_list "[lindex $resname 0] $prefix\_[lindex $resname 0].dx"
 
       }
     }
@@ -1997,14 +1999,14 @@ proc ::druggability::Process_system {} {
       volmap occupancy [atomselect top "noh water and (exwithin 4 of noh protein)"] -points -allframes -res $grid_spacing -combine avg -minmax $minmaxW -checkpoint 0 -o [file join "$outputdir" "$prefix\_water.dx"]
     }
     if {$grid_hydrophobic} {
-      volmap occupancy [atomselect top "resname IPRO IBUT and name C1 C2 C3 C4 and (exwithin 4 of noh protein)"] -points -allframes -res $grid_spacing -combine avg -minmax $minmaxW -checkpoint 0 -o [file join "$outputdir" "$prefix\_hydrophobic.dx"]
+      volmap occupancy [atomselect top "resname IPRO PRO2 IBUT IBTN and name C1 C2 C3 C4 and (exwithin 4 of noh protein)"] -points -allframes -res $grid_spacing -combine avg -minmax $minmaxW -checkpoint 0 -o [file join "$outputdir" "$prefix\_hydrophobic.dx"]
     }
 
-    if {$grid_polar && [[atomselect top "resname ACAM IPRO"] num] > 0} {
-      volmap occupancy [atomselect top "resname ACAM IPRO and name OH2 O3 N4 and (exwithin 4 of noh protein)"] -points -allframes -res $grid_spacing -combine avg -minmax $minmaxW -checkpoint 0 -o [file join "$outputdir" "$prefix\_polar.dx"]
+    if {$grid_polar && [[atomselect top "resname ACAM IPRO PRO2"] num] > 0} {
+      volmap occupancy [atomselect top "resname ACAM IPRO PRO2 and name OH2 O3 N4 and (exwithin 4 of noh protein)"] -points -allframes -res $grid_spacing -combine avg -minmax $minmaxW -checkpoint 0 -o [file join "$outputdir" "$prefix\_polar.dx"]
     }
-    if {$grid_negative && [[atomselect top "resname ACET"] num] > 0} {
-      volmap occupancy [atomselect top "resname ACET and name O3 O4 and (exwithin 4 of noh protein)"] -points -allframes -res $grid_spacing -combine avg -minmax $minmaxW -checkpoint 0 -o [file join "$outputdir" "$prefix\_negative.dx"]
+    if {$grid_negative && [[atomselect top "resname ACET ACTT"] num] > 0} {
+      volmap occupancy [atomselect top "resname ACET ACTT and name O3 O4 and (exwithin 4 of noh protein)"] -points -allframes -res $grid_spacing -combine avg -minmax $minmaxW -checkpoint 0 -o [file join "$outputdir" "$prefix\_negative.dx"]
     }
     if {$grid_positive && [[atomselect top "resname IPAM"] num] > 0} {
       volmap occupancy [atomselect top "resname IPAM and name N4 and (exwithin 4 of noh protein)"] -points -allframes -res $grid_spacing -combine avg -minmax $minmaxW -checkpoint 0 -o [file join "$outputdir" "$prefix\_positive.dx"]
