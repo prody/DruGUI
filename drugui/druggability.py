@@ -1,8 +1,4 @@
 """Druggability Index Analysis"""
-
-__author__ = 'Ahmet Bakan'
-__copyright__ = 'Copyright (C) 2010 Ahmet Bakan'
-
 import numpy as np
 
 import os
@@ -16,7 +12,7 @@ import logging.handlers
 from glob import glob
 
 
-__all__ = ['DIA']
+__all__ = ['DIA', 'pickler']
 
 """Druggability package related exceptions."""
 
