@@ -1,4 +1,4 @@
-# Copyright (c) 2010, Ahmet Bakan
+# Copyright (c) 2010, University of Pittsburgh
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without

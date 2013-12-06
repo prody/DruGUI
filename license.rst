@@ -3,7 +3,7 @@ License
 
 ::
 
-    Copyright (c) 2013, Ahmet Bakan
+    Copyright (c) 2013, University of Pittsburgh
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without

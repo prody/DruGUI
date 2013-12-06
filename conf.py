@@ -42,7 +42,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Druggability Suite'
-copyright = u'2013, Ahmet Bakan'
+copyright = u'2013, University of Pittsburgh'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
