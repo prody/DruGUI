@@ -23,7 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package provide drugui 1.0
+package provide drugui 1.1
 
 package require solvate
 package require autoionize
@@ -31,9 +31,23 @@ package require psfgen
 package require pbctools
 package require exectool
 
-
 set DRUGGABILITY_PATH $env(DRUGGABILITY_PATH)
 set PACKAGE_PATH "$DRUGGABILITY_PATH"
+set PACKAGEPATH "$DRUGGABILITY_PATH"
+set env(PROBEDIR) "$DRUGGABILITY_PATH"
+
+variable platform $tcl_platform(platform)
+switch $platform {
+  unix {
+    set TMPDIR "/tmp" ;  # or even $::env(TMPDIR), at times.
+  } macintosh {
+    set TMPDIR $::env(TRASH_FOLDER)  ;# a better place?
+  } default {
+    set TMPDIR [pwd]
+    catch {set TMPDIR $::env(TMP)}
+    catch {set TMPDIR $::env(TEMP)}
+  }
+}
 
 namespace eval ::druggability:: {
   namespace export druggability
@@ -3005,3 +3019,1217 @@ proc drugui_tk {} {
   #return $::druggability::w
 }
 #druggability_tk
+
+
+# DRUGUI COMMAND FOR DIVERSE PROBES
+
+# Add new probe topology and parameter files here
+set PROBETOPPAR [dict create PBDA "probe2.top probe.prm"]
+dict set PROBETOPPAR CGenFF "cgenff.top cgenff.prm"
+
+# Add new probe types here, probe.dat must include one of these
+# Probes with no type specification won't be listed by the plugin
+set PROBETYPES [dict create core "Core probes"]
+dict set PROBETYPES polar "Polar probes"
+dict set PROBETYPES hydrophobe "Hydrophobes"
+dict set PROBETYPES negative "Negatively charged"
+dict set PROBETYPES positive "Positively charged"
+dict set PROBETYPES ring5 "5-membered rings"
+dict set PROBETYPES ring6 "6-membered rings"
+
+
+variable PROBEDATA [dict create]
+variable PROBEDEBUG 0
+proc drugui_data { } {
+
+  global PACKAGEPATH
+  global PROBEDATA
+  global PROBETYPES
+  global PROBETOPPAR
+  #variable SKIPRESI "TIP3 CLA SOD"
+
+  #dict set PROBEDATA defaults ""
+  foreach {key} [dict keys $PROBETYPES] {
+    dict set PROBEDATA $key ""
+  }
+
+  set inf [open [file join $PACKAGEPATH "probe.dat"] r]
+  foreach line [split [read -nonewline $inf] \n] {
+    if {[llength $line] < 3 || [string equal -length 1 $line "#"]} {continue}
+    set resi [lindex $line 0]
+    set key [lindex $line 1]
+    if {![dict exists $PROBEDATA $resi]} {
+      dict set PROBEDATA $resi default 0
+      dict set PROBEDATA $resi alias ""
+      dict set PROBEDATA $resi atomnames ""
+      dict set PROBEDATA $resi charge 0
+      dict set PROBEDATA $resi source ""
+    }
+    if {$key == "default" && [lindex $line 2] > 0} {
+      dict lappend PROBEDATA defaults $resi
+    }
+    if {$key == "type" && [lindex $line 2] > 0} {
+      dict lappend PROBEDATA [lindex $line 2] $resi
+    }
+    dict set PROBEDATA $resi $key [lrange $line 2 end]
+    if {$key == "alias" && [expr [llength [dict get $PROBEDATA $resi $key]] % 2] != 0} {
+      error "Problem in aliases of $resi!"
+    }
+   }
+  close $inf
+
+  # read probes from all topology files (*.top)
+  set ipronames "C2 H21 C1 H11 H12 H13 C3 H31 H32 H33 OH2 HO2"
+  dict for {src toppar} $PROBETOPPAR {
+    set inf [open [file join $PACKAGEPATH [lindex $toppar 0]] r]
+    set resi "____"
+    set prev "____"
+    foreach line [split [read -nonewline $inf] \n] {
+      if {[dict exists $PROBEDATA $resi] && [string range $line 0 3] == "ATOM"} {
+        dict set PROBEDATA $resi atomnames "[dict get $PROBEDATA $resi atomnames] [lindex $line 1]"
+      } elseif {[string range $line 0 3] == "RESI"} {
+        set prev $resi
+        set resi [string trim [lindex $line 1]]
+        if {[dict exists $PROBEDATA $resi]} {
+          dict set PROBEDATA $resi charge [lindex $line 2]
+          dict set PROBEDATA $resi source $src
+        }
+        if {[dict exists $PROBEDATA $prev]} {
+          set thisnames [dict get $PROBEDATA $prev atomnames]
+          set remove 0
+          set aliases [dict get $PROBEDATA $prev alias]
+          foreach {name alias} $aliases {
+            if {[lsearch $ipronames $name] == -1} {
+              error "Invalid $prev alias, $name is not found in IPRO!"
+              #set remove 1
+            } elseif {[lsearch $thisnames $alias] == -1} {
+              error "Invalid $prev alias, $alias is not found in $prev!"
+              #set remove 1
+            }
+            #if {$remove} {
+            #  set PROBEDATA [dict remove $PROBEDATA $prev]
+            #  break
+            #}
+          }
+        }
+      }
+    }
+    close $inf
+  }
+
+
+}
+
+drugui_data
+
+proc drugui_usage { } {
+  global PROBEDATA
+  global PROBETYPES
+
+  vmdcon -info "Usage: drugui <psffile> <pdbfile> \[options\]"
+  vmdcon -info ""
+  vmdcon -info "Options:"
+  vmdcon -info "    -probes <Yes/no>"
+  vmdcon -info "      (use default probe mixture; see below)"
+  vmdcon -info "    -PROBE <percentage>"
+  vmdcon -info "      (probe type and percentage, e.g. -IPRO 80 -ACET 10 -IPAM 10)"
+  vmdcon -info "    -prefix <outname>"
+  vmdcon -info "      (data will be written to outname.psf/outname.pdb/etc.)"
+  vmdcon -info "    -outdir <directory>"
+  vmdcon -info "      (data will be written into specified directory, default is .)"
+  vmdcon -info "    -rotate <yes/No>"
+  vmdcon -info "      (rotate molecule to minimize water volume)"
+  vmdcon -info "    -padding <distance>"
+  vmdcon -info "      (minimum solvent box padding in all directions, default is 6 A)"
+  vmdcon -info "    -boundary <distance>"
+  vmdcon -info "      (minimum distance between water/probe and solute, default is 2.4 A)"
+  vmdcon -info "    -neutral <Yes/no>"
+  vmdcon -info "      (add counter ions, chloride or sodium, to make the system neutral)"
+  vmdcon -info "    -lipid <yes/No>"
+  vmdcon -info "      (system is solvated by considering lipid bilayer in xy plane)"
+  vmdcon -info "    -nsim <number>"
+  vmdcon -info "      (number of independent simulations, default 0)"
+  vmdcon -info "    -simlen <ns>"
+  vmdcon -info "      (length of individual simulations in ns)"
+  vmdcon -info "    -constrain <Heavy/calpha>"
+  vmdcon -info "      (which protein atoms to contraint in equilibration step)"
+  vmdcon -info "    -parameter <filename>"
+  vmdcon -info "      (additional parameter files; multiple occurrence is handled)"
+  vmdcon -info ""
+  vmdcon -info "Available probes -RESI \[default_percentage\] (name, charge, source)"
+  vmdcon -info ""
+  #vmdcon -info "  Default probes: "
+
+  #set defaults [dict get $PROBEDATA defaults]
+  #foreach {key} $defaults {
+  #  dict with PROBEDATA $key {
+  #    vmdcon -info "    -$key $default% ($name, [format %.1f $charge]e)"
+  #  }
+  #}
+  #vmdcon -info "  Other probes: "
+  foreach type [dict keys $PROBETYPES] {
+    set types [dict get $PROBEDATA $type]
+    if {[llength $types]} {
+      vmdcon -info "[dict get $PROBETYPES $type]"
+      foreach resi $types {
+        set info [dict get $PROBEDATA $resi]
+        dict with info {
+          if {$default} {
+            vmdcon -info "    -$resi $default% ($name, [format %.1f $charge]e, $source)"
+          } else {
+            vmdcon -info "    -$resi ($name, [format %.1f $charge]e, $source)"
+          }
+        }
+      }
+      #dict for {key info} $PROBEDATA {
+        #if {[lsearch $defaults $key] > -1} {continue}
+        #if {$key == "defaults"} {continue}
+      #}
+      vmdcon -info ""
+    }
+  }
+
+  vmdcon -info ""
+  vmdcon -info "Notes:"
+  vmdcon -info "    - Passing \"y\" or \"n\" (case-insensitive) is sufficient for applicable options."
+  vmdcon -info "    - When probe types are specified, probe percentages must add up to 100."
+  vmdcon -info "    - When probe is \"no\", only water (and ions) will be added."
+  vmdcon -info "    - Water segment name prefix is \"WT\"."
+  vmdcon -info "    - Ion segment name is \"ION\"."
+  vmdcon -info "    - Input molecule dimensions are used to determine size of the solvation box."
+  vmdcon -info "    - When specified, all atoms of the system is rotated by 10 degree increments."
+  vmdcon -info "    - Sodium and chloride ions are used to neutralize the system."
+  vmdcon -info "    - Minimum distances from solute and between ions are set to 5 A."
+  error ""
+
+}
+
+proc drugui {args} {
+  global errorInfo errorCode
+  set oldcontext [psfcontext new]  ;# new context
+  set errflag [catch { eval drugui_core $args } errMsg]
+  set savedInfo $errorInfo
+  set savedCode $errorCode
+  psfcontext $oldcontext delete  ;# revert to old context
+  if $errflag { error $errMsg $savedInfo $savedCode }
+}
+
+proc loginfo {logfile message} {
+  vmdcon -info $message
+  puts $logfile $message
+}
+proc logdebug {logfile message} {
+  global PROBEDEBUG
+  if {$PROBEDEBUG} {
+    vmdcon -info "DEBUG $message"
+    puts $logfile "DEBUG $message"
+  }
+}
+
+proc drugui_core {args} {
+
+  # Print usage information if less than 2 arguments are given
+  if { [llength $args] < 2 } {
+    drugui_usage
+  }
+
+  global env
+  global PROBEDATA
+
+  set inputpsf [lindex $args 0]
+  if {[file extension $inputpsf] != ".psf"} {
+    error "First argument must be a PSF file."
+  }
+  if {![file exists $inputpsf]} {
+    error "Input PSF file does not exist."
+  }
+
+  set inputpdb [lindex $args 1]
+  if {[file extension $inputpdb] != ".pdb"} {
+    error "Second argument must be a PDB file."
+  }
+  if {![file exists $inputpdb]} {
+    error "Input PDB file does not exist."
+  }
+
+  if {[expr [llength $args] % 2] != 0} {
+    error "Each option must be paired with an argument, call drugui_usage for more information."
+  }
+
+  # PSF and PDB files, and other info, of the probe box
+  set probepsf [file join $env(PROBEDIR) probe.psf]
+  set probepdb [file join $env(PROBEDIR) probe.pdb]
+  set probetop [file join $env(PROBEDIR) probe2.top]
+  set probeprm [file join $env(PROBEDIR) probe.prm]
+  set cgenfftop [file join $env(PROBEDIR) cgenff.top]
+  set cgenffprm [file join $env(PROBEDIR) cgenff.prm]
+  set probebox 62.3572; # side length of the probe box
+  set probekey "name OH2"; # name of a key atom that occurs once per residue
+  if {!([file exists $probepsf] && [file exists $probepdb] &&
+        [file exists $probetop] && [file exists $probeprm] &&
+        [file exists $cgenfftop] && [file exists $cgenffprm])} {
+    error "One of probe PSF, PDB, TOP, or PRM files is not found in $env(PROBEDIR)."
+  }
+
+  set opts [dict create]
+  set parameterfiles [list]
+  foreach {key value} [lrange $args 2 end] {
+    if {$key == "-parameter"} {
+      lappend parameterfiles $value
+    } else {
+      dict set opts $key $value
+    }
+  }
+
+  set outdir "."
+  if {[dict exists $opts "-outdir"]} {
+    set outdir [dict get $opts "-outdir"]
+  }
+  dict unset opts "-outdir"
+
+  if {[dict exists $opts "-prefix"]} {
+    set prefix [dict get $opts "-prefix"]
+  } else {
+    set prefix "[file rootname [lindex [file split $inputpsf] end]]_output"
+  }
+  dict unset opts "-prefix"
+
+  set outputname [file join $outdir $prefix]
+  set intermediate [file join $outdir intermediate]
+  set logfile [open "$outputname.log" a]
+  loginfo $logfile "---==## [clock format [clock seconds]] #==---"
+  loginfo $logfile "DruGUI version: [package versions drugui]"
+  loginfo $logfile "Command: probe $args"
+  loginfo $logfile "Input PSF: \"$inputpsf\"."
+  loginfo $logfile "Input PDB: \"$inputpdb\"."
+  loginfo $logfile "Output directory: \"$outdir\"."
+  loginfo $logfile "Output prefix: \"$prefix\"."
+
+  set general 0
+  if {[dict exists $opts "-probes"] && [string equal -nocase -length 1 [dict get $opts "-probes"] "n"]} {
+    set probes 0
+    loginfo $logfile "Probe molecules are not added to the system."
+  } else {
+    set probeTotal 0
+    set probePercent [dict create]
+    set probes 1
+    loginfo $logfile "Probe molecules are added to the system."
+    set useDefaults 1
+    dict for {key info} $PROBEDATA {
+      if {[dict exists $opts "-$key"]} {
+        set useDefaults 0
+      }
+    }
+    if {$useDefaults} {
+      loginfo $logfile "Default probe composition is used:"
+      foreach key [dict get $PROBEDATA defaults] {
+        dict with PROBEDATA $key {
+          dict set probePercent $key $default
+          loginfo $logfile "    $key $default% ($name; $charge e)"
+          }
+      }
+    } else {
+      loginfo $logfile "Custom probe composition is used:"
+      dict for {key info} $PROBEDATA {
+        if {[dict exists $opts "-$key"]} {
+          dict with info {
+            set percentage [dict get $opts "-$key"]
+            if {![string is digit $percentage]} {
+              error "\"-$key $percentage\" is not valid, probe percentages must be positive integers."
+            }
+            dict unset opts "-$key"
+            if {$source == "CGenFF"} {
+              set general 1
+            }
+            dict set probePercent $key $percentage
+            incr probeTotal $percentage
+            loginfo $logfile "    $key $percentage% ($name; $charge e)"
+          }
+        }
+      }
+      if {$probeTotal != 100} {
+        error "Probe percentages must add up to 100."
+      }
+    }
+  }
+  if {$general} {
+    loginfo $logfile "Using residue definitions from CGenFF."
+  }
+  dict unset opts "-probes"
+
+  if {[dict exists $opts "-neutral"] && [string equal -nocase -length 1 [dict get $opts "-neutral"] "n"]} {
+    set neutral 0
+    loginfo $logfile "System is not neutralized by adding counter ions."
+  } else {
+    set neutral 1
+    loginfo $logfile "System is neutralized by adding counter ions."
+  }
+  dict unset opts "-neutral"
+
+  if {[dict exists $opts "-rotate"] && [string equal -nocase -length 1 [dict get $opts "-rotate"] "y"]} {
+    set rotate 1
+    loginfo $logfile "System is rotated to minimize final volume."
+  } else {
+    set rotate 0
+    loginfo $logfile "System is not rotated to minimize final volume."
+  }
+  dict unset opts "-rotate"
+
+  set padding 6
+  if {[dict exists $opts "-padding"]} {
+    set padding [dict get $opts "-padding"]
+  }
+  dict unset opts "-padding"
+  if {![string is double $padding] || $padding <= 0} {
+    error "\"-padding $padding\" is not valid, a positive number is expected."
+  }
+  loginfo $logfile "Minimum solvent padding is set to $padding A."
+
+  set boundary 2.4
+  if {[dict exists $opts "-boundary"]} {
+    set boundary [dict get $opts "-boundary"]
+  }
+  dict unset opts "-boundary"
+  if {![string is double $boundary] || $boundary <= 0} {
+    error "\"-boundary $boundary\" is not valid, a positive number is expected."
+  }
+  loginfo $logfile "Minimum solute boundary is set to $boundary A."
+
+  if {[dict exists $opts "-lipid"] && [string equal -nocase -length 1 [dict get $opts "-lipid"] "y"]} {
+    set lipid 1
+    loginfo $logfile "System contains lipid bilayer."
+  } else {
+    set lipid 0
+    loginfo $logfile "System does not contain lipid bilayer."
+  }
+  dict unset opts "-lipid"
+
+  set nsim 0
+  if {[dict exists $opts "-nsim"]} {
+    set nsim [dict get $opts "-nsim"]
+    dict unset opts "-nsim"
+  }
+  set simlen 20
+  if {[dict exists $opts "-simlen"]} {
+    set simlen [dict get $opts "-simlen"]
+    dict unset opts "-simlen"
+  }
+  if {$nsim > 0} {
+    loginfo $logfile "NAMD configuration files for $nsim independent $simlen ns simulation(s) are written."
+  } elseif {$nsim < 0} {
+    error "\"-nsim $nsim\" is not valid, zero or a positive number is expected."
+  }
+
+  set constrain "heavy"
+  if {[dict exists $opts "-constrain"]} {
+    set constrain [dict get $opts "-constrain"]
+  }
+  dict unset opts "-constrain"
+
+  if {[dict exists $opts "-cleanup"] && [string equal -nocase -length 1 [dict get $opts "-cleanup"] "n"]} {
+    set cleanup 0
+  } else {
+    set cleanup 1
+  }
+  dict unset opts "-cleanup"
+
+  if {[dict size $opts]} {
+    loginfo $logfile "Following option arguments are not understood:"
+    dict for {key info} $opts {
+      loginfo $logfile "    $key [dict get $opts $key]"
+    }
+  }
+
+  set padding_x $padding
+  set padding_y $padding
+  set padding_z $padding
+  set padx 0
+  set pady 0
+  set padz 0
+  if {$probes} {
+    set padx 5
+    set pady 5
+    set padz 5
+  }
+  if {$lipid} {
+    set padding_x 0
+    set padding_y 0
+    set padding_z $padding
+    set padx -3
+    set pady -3
+    set padz 5
+    set rotate 0
+  }
+
+  set solvate_options "$inputpsf $inputpdb -o $intermediate"
+  set solvate_options [concat $solvate_options "-b $boundary"]
+  set solvate_options [concat $solvate_options "-x [expr $padding_x + $padx]"]
+  set solvate_options [concat $solvate_options "-y [expr $padding_y + $pady]"]
+  set solvate_options [concat $solvate_options "-z [expr $padding_z + $padz]"]
+  set solvate_options [concat $solvate_options "+x [expr $padding_x + $padx]"]
+  set solvate_options [concat $solvate_options "+y [expr $padding_y + $pady]"]
+  set solvate_options [concat $solvate_options "+z [expr $padding_z + $padz]"]
+  if {$probes} {
+    set solvate_options [concat $solvate_options "-spdb $probepdb -spsf $probepsf -stop $probetop -ks \"$probekey\" -ws $probebox"]
+  }
+  if {$rotate} {
+    set solvate_options [concat $solvate_options "-rotate -rotinc 10 -rotsel {all}"]
+  }
+  loginfo $logfile "Command: solvate $solvate_options"
+  eval solvate $solvate_options
+
+  if {$neutral} {
+    set all [atomselect top "all"]
+    set proteincharge [vecsum [$all get charge]]
+    $all delete
+    if {!$probes} {
+      # number of CL and NA atoms are determined
+      loginfo $logfile "Ionization: System has a total charge of $proteincharge electrons."
+      if {$proteincharge > 0} {
+          set nna 0
+          set ncl [expr round($proteincharge)]
+          loginfo $logfile "Ionization: $ncl chloride ions will be added."
+      } else {
+          set ncl 0
+          set nna [expr -1 * round($proteincharge)]
+          loginfo $logfile "Ionization: $nna sodium ions will be added."
+      }
+      if {$ncl > 0 | $nna > 0} {
+          autoionize -psf $intermediate.psf -pdb $intermediate.pdb \
+          -o $intermediate -from 5 -between 5 -ncl $ncl -nna $nna -seg ION
+      }
+    }
+  }
+
+  if {$probes} {
+    #===============================================================================
+    # START - ADJUST RELATIVE NUMBER of WATER and PROBE molecules
+    # minimum and maximum coordinates for PROTEIN is calculated.
+    # if a molecule other than a PROTEIN is of interest, change selection in the next line.
+    set protein [atomselect top "not water and not segid ION \"WT.*\""]
+    set minmaxP [measure minmax $protein]
+    set minP [lindex $minmaxP 0]
+    set maxP [lindex $minmaxP 1]
+    set minPx [lindex $minP 0]
+    set minPy [lindex $minP 1]
+    set minPz [lindex $minP 2]
+    set maxPx [lindex $maxP 0]
+    set maxPy [lindex $maxP 1]
+    set maxPz [lindex $maxP 2]
+
+    set padx $padding_x
+    set pady $padding_y
+    set padz $padding_z
+
+    if {$lipid} {
+      set sel [atomselect top "lipid"]
+      set minmaxL [measure minmax $sel]
+      $sel delete
+      set minLz [expr [lindex [lindex $minmaxL 0] 2] + 10]
+      set maxLz [expr [lindex [lindex $minmaxL 1] 2] - 10]
+      set selWstring "water and name OH2 and x > [expr $minPx-$padx] and y > [expr $minPy-$pady] and x < [expr $maxPx+$padx] and y < [expr $maxPy+$pady] and ((z < [expr $maxPz+$padz] and z > $maxLz) or (z < $minLz and z > [expr $minPz-$padz]))"
+    } else {
+      set selWstring "water and name OH2 and x > [expr $minPx-$padx] and y > [expr $minPy-$pady] and z > [expr $minPz-$padz] and x < [expr $maxPx+$padx] and y < [expr $maxPy+$pady] and z < [expr $maxPz+$padz]"
+    }
+    # select waters in the box of requested size
+    set selWater [atomselect top "$selWstring"]
+    set nWater [$selWater num]
+    logdebug $logfile "Number of waters: $nWater"
+    set indicesWater [$selWater get index]
+    $selWater delete
+
+    #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    # THE RATIO OF WATER TO PROBE MOLECULE (INTEGERS)
+    # - 20 is an ideal ratio. It has worked fine in the test cases.
+    # - Less than 20 leads to underestimates.
+
+    if {$lipid} {
+      set selPstring "resname IPRO and name OH2 and x > [expr $minPx-$padx] and y > [expr $minPy-$pady] and x < [expr $maxPx+$padx] and y < [expr $maxPy+$pady] and ((z < [expr $maxPz+$padz] and z > $maxLz) or (z < $minLz and z > [expr $minPz-$padz]))"
+    } else {
+      set selPstring "resname IPRO and name OH2 and x > [expr $minPx-$padx] and y > [expr $minPy-$pady] and x < [expr $maxPx+$padx] and y < [expr $maxPy+$pady] and z < [expr $maxPz+$padz] and z > [expr $minPz-$padz]"
+    }
+
+    set water2probeRatio 20
+
+    proc calc_gcd {p q} {
+       # calculate greater common divisor
+       while {$q != 0} {set q [expr {$p % [set p $q]}]}
+       expr {abs($p)}
+    }
+    set gcd 0
+    dict for {key value} $probePercent {
+      set gcd [calc_gcd $gcd $value ]
+    }
+    set modWater [expr $water2probeRatio * 100 / $gcd]
+    logdebug $logfile "Number of waters must be multiples of $modWater"
+    if {[expr $nWater % $modWater] == 0} {
+      set howManyMoreWater 0
+    } else {
+     set howManyMoreWater [expr $modWater - $nWater % $modWater]
+    }
+    logdebug $logfile "Change in number of waters: $howManyMoreWater"
+    if {$howManyMoreWater} {
+      set pad 0.1
+      if {$lipid} {
+        set addWater [atomselect top "water and name OH2 and exwithin $pad of index $indicesWater and (z > $maxLz or z < $minLz)"]
+      } else {
+        set addWater [atomselect top "water and name OH2 and exwithin $pad of index $indicesWater"]
+      }
+      while {[$addWater num] < $howManyMoreWater && $pad < [expr $padding+5] } {
+          $addWater delete
+          set pad [expr $pad + 0.1]
+          if {$lipid} {
+            set addWater [atomselect top "water and name OH2 and exwithin $pad of index $indicesWater and (z > $maxLz or z < $minLz)"]
+          } else {
+            set addWater [atomselect top "water and name OH2 and exwithin $pad of index $indicesWater"]
+          }
+      }
+      set indicesWater "$indicesWater [lrange [$addWater get index] 0 [expr $howManyMoreWater - 1]]"
+      $addWater delete
+    }
+    loginfo $logfile "Number of water molecules: [llength $indicesWater]"
+    # select probes
+    set selProbe [atomselect top "$selPstring"]
+    set nProbe [$selProbe num]
+    logdebug $logfile "Number of probes: $nProbe"
+    set indicesProbe [$selProbe get index]
+
+    # select more probes
+    set howManyMoreProbe [expr [llength $indicesWater] / $water2probeRatio - $nProbe]
+    logdebug $logfile "Change in number of probes: $howManyMoreProbe"
+    if {$howManyMoreProbe > 0} {
+      set pad 5.0
+      if {$lipid} {
+        set addProbe [atomselect top "resname IPRO and name OH2 and exwithin $pad of index $indicesProbe and (z > $maxLz or z < $minLz)"]
+      } else {
+        set addProbe [atomselect top "resname IPRO and name OH2 and exwithin $pad of index $indicesProbe"]
+      }
+      while {[$addProbe num] < $howManyMoreProbe && $pad < [expr $padding+5]} {
+          set pad [expr $pad + 0.25]
+          $addProbe delete
+          if {$lipid} {
+            set addProbe [atomselect top "resname IPRO and name OH2 and exwithin $pad of index $indicesProbe and (z > $maxLz or z < $minLz)"]
+          } else {
+            set addProbe [atomselect top "resname IPRO and name OH2 and exwithin $pad of index $indicesProbe"]
+          }
+      }
+      set indicesProbe "$indicesProbe [lrange [$addProbe get index] 0 [expr $howManyMoreProbe - 1]]"
+      $addProbe delete
+    } elseif {$howManyMoreProbe < 0} {
+      set indicesProbe [lrange $indicesProbe 0 end+$howManyMoreProbe]
+    }
+    loginfo $logfile "Number of probe molecules: [llength $indicesProbe]"
+    set indicesProbe [lsort $indicesProbe]
+    set nProbe [llength $indicesProbe]
+    loginfo $logfile "System contains [llength $indicesWater] water and $nProbe probe molecules"
+
+    #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    # END - ADJUST RELATIVE NUMBER of WATER and PROBE molecules
+
+    # WRITE PDB files for SOLVENT and IONS
+    # PSFGEN
+
+    package require psfgen
+    psfcontext reset
+    psfcontext [psfcontext create]
+    topology $probetop
+    if {$general} {topology $cgenfftop}
+    #topology [file join $env(CHARMMTOPDIR) top_all27_prot_lipid_na.inp]
+    readpsf $inputpsf
+    set sel [atomselect top "not segid ION \"WT.*\""]
+    $sel writepdb $intermediate.pdb
+    $sel delete
+    coordpdb $intermediate.pdb
+
+    #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    # START - PROBE RENUMBER and MUTATE
+    # Renumber probe molecule resids starting from 1
+    # This is useful when mutating probe molecules
+    set residProbe 1
+    foreach indexProbe $indicesProbe {
+      set sel [atomselect top "same residue as index $indexProbe"]
+      $sel set resid $residProbe
+      $sel set chain "X"
+      incr residProbe
+      $sel delete
+    }
+    # Calculate number of copies of each probe
+    set probeCount [dict create]
+    set howmanylist [list]
+    set probeidlist [list]
+    set aliaslist [list]
+    loginfo $logfile "System contains the following probes:"
+    set probecharge 0
+    dict for {key value} $probePercent {
+      set howmanyPROB [::tcl::mathfunc::int [expr $nProbe * $value / 100.0]]
+      dict set probeCount $key $howmanyPROB
+      loginfo $logfile "    $howmanyPROB [dict get $PROBEDATA $key name] molecules ($key)"
+      lappend probeidlist $key
+      lappend howmanylist $howmanyPROB
+      lappend aliaslist [dict get $PROBEDATA $key alias]
+      set charge [::tcl::mathfunc::int [dict get $PROBEDATA $key charge]]
+      if {$charge} {
+        incr probecharge [expr $howmanyPROB * $charge]
+      }
+    }
+    set totalcharge [expr $probecharge + $proteincharge]
+    logdebug $logfile "probeCount $probeCount"
+    logdebug $logfile "howmanylist $howmanylist"
+    logdebug $logfile "proteincharge $proteincharge"
+    logdebug $logfile "probecharge $probecharge"
+    logdebug $logfile "totalcharge $totalcharge"
+    # Perform mutations of IPRO to other probes
+    if {![dict exist $probePercent IPRO] || [dict get $probePercent IPRO] < 100} {
+      logdebug $logfile "Mutating IPRO to other probe types."
+      set residProbe 1
+      while {$residProbe <= $nProbe} {
+        set whichProbe [::tcl::mathfunc::int [expr rand() * [llength $probeidlist]]]
+        if {[lindex $howmanylist $whichProbe] > 0} {
+          set sel [atomselect top "chain X and resid $residProbe"]
+          $sel set resname [lindex $probeidlist $whichProbe]
+          $sel delete
+          foreach {old new} [lindex $aliaslist $whichProbe] {
+            set sel [atomselect top "chain X and resid $residProbe and name $old"]
+            $sel set name $new
+            $sel delete
+          }
+          incr residProbe
+          lset howmanylist $whichProbe [expr [lindex $howmanylist $whichProbe] -1]
+        }
+      }
+      # Write probe molecules into an intermediate file
+      set selstr [list]
+      dict for {key value} $probePercent {
+        set info [dict get $PROBEDATA $key]
+        dict with info {
+          lappend selstr "(resname $key and name $atomnames)"
+        }
+      }
+      set selstr [join $selstr " or "]
+      set sel [atomselect top "(same residue as index $indicesProbe) and ($selstr)"]
+    } else {
+      set sel [atomselect top "same residue as index $indicesProbe"]
+    }
+    $sel writepdb $intermediate.pdb
+    $sel delete
+    set residProbe 1
+    segment PROB { pdb $intermediate.pdb }
+    coordpdb $intermediate.pdb PROB
+    # END - PROBE RENUMBER and MUTATE
+    #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+    # number of CL and NA atoms are determined
+    loginfo $logfile "Ionization: System has a total charge of $totalcharge electrons."
+    set n_ions 0
+    if {$totalcharge > 0} {
+        set n_ions [expr round($totalcharge)]
+        set ion_name "CLA"
+        set ion_resname "CLA"
+        loginfo $logfile "Ionization: $n_ions chloride ions will be added."
+    } else {
+        set n_ions [expr -1 * round($totalcharge)]
+        set ion_name "SOD"
+        set ion_resname "SOD"
+        loginfo $logfile "Ionization: $n_ions sodium ions will be added."
+    }
+    # Write and build ION segment
+    if {$n_ions > 0} {
+      set sel [atomselect top "noh water and exwithin 5 of index $indicesWater"]
+      #$sel writepdb ionlayer.pdb
+      set selIndex [$sel get index]
+      $sel delete
+      for {set ion 1} {$ion <= $n_ions} {incr ion} {
+        set sel [atomselect top "index [lindex $selIndex 0]"]
+        set ionIndex [$sel get index]
+        $sel set name $ion_name
+        $sel set resname $ion_resname
+        $sel set resid [expr $ion]
+        $sel set segname "ION"
+        $sel set chain "I"
+        $sel delete
+        set sel [atomselect top "index $selIndex and not within 5 of index $ionIndex"]
+        set selIndex [$sel get index]
+        $sel delete
+        if {[llength $selIndex] == 0} {break}
+      }
+      set sel [atomselect top "segname ION"]
+      if {$n_ions != [$sel num]} {
+        loginfo $logfile "WARNING: Desired number of ions could not be added."
+      }
+      #$sel writepdb ion.pdb
+      $sel writepdb intermediate.pdb
+      $sel delete
+      segment ION {pdb intermediate.pdb}
+      coordpdb intermediate.pdb ION
+    }
+
+    # Write and build WT* segments
+    set sel [atomselect top "segid \"WT.*\""]
+    set segidWTs [lsort -unique [$sel get segid]]
+    $sel delete
+    foreach segidWT $segidWTs {
+      set sel [atomselect top "segid $segidWT and index $indicesWater"]
+      # While at it, renumber water molecule resids starting from 1 for each segment
+      set residWater 1
+      foreach indexWater [$sel get index] {
+        set sel [atomselect top "same residue as index $indexWater"]
+        $sel set resid $residWater
+        incr residWater
+        $sel delete
+      }
+      set sel [atomselect top "segid $segidWT and (same residue as index $indicesWater)"]
+      $sel writepdb $intermediate.pdb
+      segment $segidWT {pdb $intermediate.pdb}
+      coordpdb $intermediate.pdb $segidWT
+      $sel delete
+    }
+
+    # Guess coordinates of mutated probe molecules
+    guesscoord
+
+    # Write structure and coordinate data
+    writepsf $outputname.psf
+    loginfo $logfile "Output: Structural data is written into $outputname.psf file."
+    writepdb $outputname.pdb
+    loginfo $logfile "Output: Coordinate data is written into $outputname.pdb file."
+    psfcontext reset
+
+  } else {
+    file rename -force $intermediate.psf $outputname.psf
+    file rename -force $intermediate.pdb $outputname.pdb
+  }
+  foreach i [molinfo list] { mol off $i }
+  set none [mol new $outputname.psf]
+  set none [mol addfile $outputname.pdb]
+
+  #============================================================================
+  # SET OCCUPANCY and BETA columns for constraints
+
+  # Write PDB file with constraints
+  set all [atomselect top "all"]
+  $all set beta 0
+  $all set occupancy 0
+  # protein heavy atoms BETA 1
+  $all delete
+
+  if {$constrain == "heavy"} {
+    set protein [atomselect top "noh and not water and not segid PROB ION \"WT.*\""]
+    loginfo $logfile "Constraints: [$protein num] heavy atoms are constrained in equilibration"
+  } elseif {$constrain == "calpha"} {
+    set protein [atomselect top "noh and not water and not segid PROB ION \"WT.*\" and protein and name CA"]
+    loginfo $logfile "Constraints: [$protein num] alpha carbons are constrained in equilibration."
+  } else {
+    set protein [atomselect top $constrain]
+    loginfo $logfile "Constraints: [$protein num] atoms matching \"$constrain\" are constrained in equilibration."
+  }
+
+  $protein set beta 1
+  $protein delete
+  # alpha carbons OCCUPANCY 1
+  set protein [atomselect top "protein and name CA and not segid PROB ION \"WT.*\""]
+  $protein set occupancy 1
+  set geomcent [measure center $protein]
+  $protein delete
+  set all [atomselect top "all"]
+  #$all moveby [vecmul {-1 -1 -1} $geomcent]
+  $all writepdb $outputname.pdb
+  $all delete
+  #set protein [atomselect top "noh and not water and not segid PROB ION \"WT.*\""]
+  #$protein writepdb "$outputname\_heavyatoms.pdb"
+  #$protein delete
+  # REPRESENTATIONS
+
+  drugui_representations top
+
+
+  #============================================================================
+  # WRITE XSC FILE
+  # Get box dimensions and print them
+  set selWater [atomselect top "noh water"]
+  set minmaxW [measure minmax $selWater]
+  set minW [lindex $minmaxW 0]
+  set maxW [lindex $minmaxW 1]
+  set minWx [lindex $minW 0]
+  set minWy [lindex $minW 1]
+  set minWz [lindex $minW 2]
+  set maxWx [lindex $maxW 0]
+  set maxWy [lindex $maxW 1]
+  set maxWz [lindex $maxW 2]
+  $selWater delete
+  if {$probes} then {
+    set desired_density 0.62
+  } else {
+    set desired_density 0.65
+  }
+
+  set all [atomselect top "all"]
+  set total_mass [vecsum [$all get mass]]
+  $all delete
+  set dimScale [::tcl::mathfunc::pow [expr $total_mass / $desired_density / ($maxWx - $minWx) / ($maxWy - $minWy) / ($maxWz - $minWz)] [expr 1.0 / 3.0]]
+  set xLength [expr ($maxWx - $minWx)*$dimScale]
+  set yLength [expr ($maxWy - $minWy)*$dimScale]
+  set zLength [expr ($maxWz - $minWz)*$dimScale]
+
+  set xsc_file [open "$outputname.xsc" w]
+  puts $xsc_file "# NAMD extended system configuration output file"
+  puts $xsc_file "#\$LABELS step a_x a_y a_z b_x b_y b_z c_x c_y c_z o_x o_y o_z"
+  puts $xsc_file "0 $xLength  0  0 0 $yLength  0 0  0 $zLength  0  0  0 [join $geomcent]"
+  close $xsc_file
+  loginfo $logfile "Output: Extended system coordinates are written into $outputname.xsc file."
+
+  loginfo $logfile "System: Number of atoms [[atomselect top all] num]"
+  loginfo $logfile "System: Mass is $total_mass amu"
+  loginfo $logfile "System: Density is [expr $total_mass / $xLength / $yLength / $zLength] amu/A^3"
+
+  #===============================================================================
+
+  # DELETE intermediate files
+  file delete $intermediate.pdb
+  file delete $intermediate.psf
+  file delete $intermediate.log
+
+  #===============================================================================
+  if {$nsim} {
+    set sh_file [open "$outputname.sh" w]
+    set parfolder [file join $outdir "parameters"]
+    set parlines [list]
+    lappend parlines "paraTypeCharmm  on"
+    if {![file exists $parfolder]} {file mkdir $parfolder}
+    if {![file exists [file join $parfolder "par_all27_prot_lipid_na.inp"]]} {
+      file copy [file join $env(CHARMMPARDIR) par_all27_prot_lipid_na.inp] [file join $parfolder "par_all27_prot_lipid_na.inp"]
+    }
+    lappend parlines "parameters      ../parameters/par_all27_prot_lipid_na.inp"
+    if {$probes} {
+      if {[dict exist $probePercent IPAM] && [dict get $probePercent IPAM] > 0} {
+        if {![file exists [file join $parfolder "probe.prm"]]} {
+          file copy $probeprm [file join $parfolder "probe.prm"]
+        }
+        lappend parlines "parameters      ../parameters/probe.prm"
+      }
+      if {$general} {
+        if {![file exists [file join $parfolder "cgenff.prm"]]} {
+          file copy $cgenffprm [file join $parfolder "cgenff.prm"]
+        }
+        lappend parlines "parameters      ../parameters/cgenff.prm"
+      }
+    }
+    foreach par_file $parameterfiles {
+      set par_filename [lindex [file split $par_file] end]
+      if {[file exists $par_file]} {
+          if {![file exists [file join $parfolder "$par_filename"]]} {
+            file copy $par_file [file join $parfolder "$par_filename"]
+          }
+          lappend par_filenames $par_filename
+      } else {
+        loginfo $logfile "Parameter file $par_file is not found, you need to copy it to the parameter folder."
+      }
+      lappend parlines "parameters      ../parameters/$par_filename"
+    }
+    set parlines [join $parlines "\n"]
+    set nonbonded [list]
+    lappend nonbonded "cutoff          10.0"
+    lappend nonbonded "switching       on"
+    lappend nonbonded "switchdist      8.0"
+    lappend nonbonded "pairlistdist    12.0"
+    lappend nonbonded "margin          1.0"
+    lappend nonbonded "exclude         scaled1-4"
+    set nonbonded [join $nonbonded "\n"]
+
+    loginfo $logfile "Simulation: Parameter files are copied into ./parameter folder."
+    set minfix "_min"
+    file mkdir "$outputname$minfix"
+    set namd_file [open "$outputname$minfix/min.conf" w]
+    puts $namd_file "coordinates     ../$outputname.pdb"
+    puts $namd_file "structure       ../$outputname.psf"
+    puts $namd_file $parlines
+    puts $namd_file "outputname      min"
+    puts $namd_file "restartname     min_restart"
+    puts $namd_file "binaryoutput    no"
+    puts $namd_file "restartfreq     10000"
+    puts $namd_file "binaryrestart   no"
+    puts $namd_file "timestep        1.0"
+    puts $namd_file $nonbonded
+    puts $namd_file "temperature     0"
+    puts $namd_file "seed            12345"
+    puts $namd_file "constraints     on"
+    puts $namd_file "consref         ../$outputname.pdb"
+    puts $namd_file "conskfile       ../$outputname.pdb"
+    puts $namd_file "conskcol        B"
+    puts $namd_file "constraintScaling  1.0"
+    puts $namd_file "PME             yes"
+    puts $namd_file "PMEGridSpacing  1.0"
+    puts $namd_file "extendedSystem  ../$outputname.xsc"
+    puts $namd_file "wrapWater       on"
+    puts $namd_file "minimize        2000"
+    close $namd_file
+    puts $sh_file "cd $outputname$minfix"
+    puts $sh_file "namd2 min.conf > min.log"
+
+    loginfo $logfile "Simulation: NAMD configuration files for minimization are written into folder $outputname$minfix."
+    set simlines [list]
+    lappend simlines "binaryoutput    no"
+    lappend simlines "restartfreq     20000"
+    lappend simlines "binaryrestart   no"
+    lappend simlines "DCDfreq         2000"
+    lappend simlines "outputEnergies  2000"
+    lappend simlines "timestep        2.0"
+    lappend simlines "fullElectFrequency 2"
+    lappend simlines "nonbondedFreq      1"
+    lappend simlines "rigidBonds      all"
+    lappend simlines $nonbonded
+    lappend simlines "wrapWater       on"
+    set simlines [join $simlines "\n"]
+    set simlines2 [list]
+    lappend simlines2 "PME             yes"
+    lappend simlines2 "PMEGridSpacing  1.0"
+    lappend simlines2 "langevin         on"
+    lappend simlines2 "langevinDamping  5"
+    lappend simlines2 "langevinHydrogen off"
+    lappend simlines2 "useGroupPressure      yes"
+    lappend simlines2 "langevinPiston        on"
+    lappend simlines2 "langevinPistonTarget  1.01325"
+    lappend simlines2 "langevinPistonPeriod  100.0"
+    lappend simlines2 "langevinPistonDecay   50.0"
+    set simlines2 [join $simlines2 "\n"]
+
+    for {set i 1} {$i <= $nsim} {incr i} {
+      # MKDIR for each simulation
+      if {$i == 1} {
+        set suffix "_sim"
+      } else {
+        set suffix "_sim$i"
+      }
+      file mkdir $outputname$suffix
+      puts $sh_file "cd ../$outputname$suffix"
+      set randomSeed [::tcl::mathfunc::int [expr rand() * 1000000]]
+
+      set namd_file [open "$outputname$suffix/eq1.conf" w]
+      puts $namd_file "coordinates     ../$outputname$minfix/min.coor"
+      puts $namd_file "structure       ../$outputname.psf"
+      puts $namd_file $parlines
+      puts $namd_file "outputname      eq1"
+      puts $namd_file "restartname     eq1_restart"
+      puts $namd_file "DCDfile         eq1.dcd"
+      puts $namd_file $simlines
+      puts $namd_file "temperature     100"
+      puts $namd_file "seed            $randomSeed"
+      puts $namd_file "constraints     on"
+      puts $namd_file "consref         ../$outputname$minfix/min.coor"
+      puts $namd_file "conskfile       ../$outputname.pdb"
+      puts $namd_file "conskcol        B"
+      puts $namd_file "constraintScaling  0.5"
+      puts $namd_file $simlines2
+      puts $namd_file "langevinTemp     100"
+      puts $namd_file "langevinPistonTemp    100"
+      puts $namd_file "extendedSystem  ../$outputname.xsc"
+      puts $namd_file "reinitvels      100"
+      puts $namd_file "for \{set T 100\} \{\$T < 300\} \{incr T 10\} \{"
+      puts $namd_file "    langevinTemp      \$T;"
+      puts $namd_file "    run              1000;"
+      puts $namd_file "\}"
+      puts $namd_file "langevinTemp     300"
+      puts $namd_file "run           40000;"
+      close $namd_file
+      puts $sh_file "namd2 eq1.conf > eq1.log"
+
+      set eqn 1
+
+      if {$probes} then {
+        #vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+        set eqn 3
+        set namd_file [open "$outputname$suffix/eq2.conf" w]
+        puts $namd_file "coordinates     eq1.coor"
+        puts $namd_file "structure       ../$outputname.psf"
+        puts $namd_file $parlines
+        puts $namd_file "outputname      eq2"
+        puts $namd_file "restartname     eq2_restart"
+        puts $namd_file "DCDfile         eq2.dcd"
+        puts $namd_file $simlines
+        puts $namd_file "velocities      eq1.vel"
+        puts $namd_file "seed            $randomSeed"
+        puts $namd_file "constraints     on"
+        puts $namd_file "consref         ../$outputname$minfix/min.coor"
+        puts $namd_file "conskfile       ../$outputname.pdb"
+        puts $namd_file "conskcol        B"
+        puts $namd_file "constraintScaling  1.0"
+        puts $namd_file "PME             yes"
+        puts $namd_file "PMEGridSpacing  1.0"
+        puts $namd_file "langevin         on"
+        puts $namd_file "langevinDamping  5"
+        puts $namd_file "langevinHydrogen off"
+        puts $namd_file "extendedSystem  eq1.xsc"
+        puts $namd_file "for \{set T 300\} \{\$T < 600\} \{incr T  10\} \{"
+        puts $namd_file "    langevinTemp     \$T;"
+        puts $namd_file "    run             1000;"
+        puts $namd_file "\}"
+        puts $namd_file "langevinTemp     600"
+        puts $namd_file "run             300000;"
+        puts $namd_file "for \{set T 570\} \{\$T >= 300\} \{incr T -30\} \{"
+        puts $namd_file "    langevinTemp     \$T;"
+        puts $namd_file "    run             1000;"
+        puts $namd_file "\}"
+        close $namd_file
+        puts $sh_file "namd2 eq2.conf > eq2.log"
+
+        set namd_file [open "$outputname$suffix/eq3.conf" w]
+        puts $namd_file "coordinates     eq2.coor"
+        puts $namd_file "structure       ../$outputname.psf"
+        puts $namd_file $parlines
+        puts $namd_file "outputname      eq3"
+        puts $namd_file "restartname     eq3_restart"
+        puts $namd_file "DCDfile         eq3.dcd"
+        puts $namd_file $simlines
+        puts $namd_file "velocities      eq2.vel"
+        puts $namd_file "seed            $randomSeed"
+        puts $namd_file $simlines2
+        puts $namd_file "langevinTemp     300"
+        puts $namd_file "langevinPistonTemp    300"
+        puts $namd_file "extendedSystem  eq2.xsc"
+        puts $namd_file "run                  300000"
+        close $namd_file
+        puts $sh_file "namd2 eq3.conf > eq3.log"
+        #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      }
+
+      set namd_file [open "$outputname$suffix/sim.conf" w]
+      puts $namd_file "coordinates     eq$eqn.coor"
+      puts $namd_file "structure       ../$outputname.psf"
+      puts $namd_file $parlines
+      puts $namd_file "outputname      sim"
+      puts $namd_file "restartname     sim_restart"
+      puts $namd_file "DCDfile         sim.dcd"
+      puts $namd_file $simlines
+      puts $namd_file "velocities      eq$eqn.vel"
+      puts $namd_file "seed            $randomSeed"
+      puts $namd_file $simlines2
+      puts $namd_file "langevinTemp     300"
+      puts $namd_file "langevinPistonTemp    300"
+      puts $namd_file "extendedSystem  eq$eqn.xsc"
+      puts $namd_file "run                  [expr $simlen * 1000000]"
+      close $namd_file
+      puts $sh_file "namd2 sim.conf > sim.log"
+
+      set namd_file [open "$outputname$suffix/simrestart.conf" w]
+      puts $namd_file "coordinates     sim_restart.coor"
+      puts $namd_file "structure       ../$outputname.psf"
+      puts $namd_file $parlines
+      puts $namd_file "outputname      sim"
+      puts $namd_file "restartname     sim_restart"
+      puts $namd_file "# DON'T forget to rename DCD files incrementally for each restart"
+      puts $namd_file "DCDfile         sim1.dcd"
+      puts $namd_file "firsttimestep   XXXXX this value is found in $outputname.coor"
+      puts $namd_file $simlines
+      puts $namd_file "velocities      sim_restart.vel"
+      puts $namd_file "seed            $randomSeed"
+      puts $namd_file $simlines2
+      puts $namd_file "langevinTemp     300"
+      puts $namd_file "langevinPistonTemp    300"
+      puts $namd_file "extendedSystem  sim_restart.xsc"
+      puts $namd_file "run             XXXXX"
+      close $namd_file
+      puts $sh_file "#namd2 simrestart.conf > simrestart.log"
+
+      loginfo $logfile "Simulation: NAMD configuration files for simulation $i are written into folder $outputname$suffix."
+    }
+
+    close $sh_file
+  }
+  loginfo $logfile "Simulation: Simulation folders also contains a restart file template."
+  loginfo $logfile "Simulation: NAMD commands are written in $outputname.sh."
+
+
+  #::druggability::Logview "[pwd]/$outputname.log"
+
+  #tk_messageBox -type ok -title "Setup Complete" \
+  #  -message "Setup of $outputname is complete. See $outputname.log file."
+
+  close $logfile
+  return
+}
+
+proc drugui_representations {mol} {
+
+  for {set i [molinfo $mol get numreps]} {$i >= 0} {incr i -1} {
+    mol delrep $i $mol
+  }
+  mol addrep $mol
+  mol modstyle 0 $mol Lines 1
+  mol modselect 0 $mol "all"
+  mol addrep $mol
+  mol modstyle 1 $mol Lines 3
+  mol modselect 1 $mol "noh and not water and not segid PROB XXX ION \"WT.*\""
+  mol addrep $mol
+  mol modstyle 2 $mol NewCartoon
+  mol modcolor 2 $mol Structure
+  mol addrep $mol
+  mol modstyle 3 $mol Licorice
+  mol modselect 3 $mol "noh and not protein and not water and not ion and not segid PROB XXX ION \"WT.*\""
+  mol addrep $mol
+  mol modstyle 4 $mol Vdw
+  mol modselect 4 $mol "(water or ion) and not segid PROB XXX ION \"WT.*\""
+  mol addrep $mol
+  mol modstyle 5 $mol Vdw
+  mol modselect 5 $mol "segid ION"
+  mol addrep $mol
+  mol modstyle 6 $mol Licorice
+  mol modselect 6 $mol "noh segid PROB XXX"
+}
+
+proc drugui_test {prb} {
+
+  global PROBEDATA
+  global PACKAGEPATH
+  if {![dict exists $PROBEDATA $prb]} {
+    vmdcon "WARNING: $prb is not a valid probe name"
+    return
+  }
+
+  global TMPDIR
+  set tempfile $prb
+  set tempfile [file join $TMPDIR $prb]
+
+  set resdict [dict get $PROBEDATA $prb]
+  set aliases [dict get $resdict alias]
+  set molid [mol new [file join $PACKAGEPATH ipro.pdb]]
+  mol modstyle 0 $molid CPK
+
+  foreach {old new} $aliases {
+    set sel [atomselect $molid "resname IPRO and name $old"]
+    $sel set name $new
+    $sel set resname $prb
+    $sel delete
+  }
+  set sel [atomselect $molid "resname $prb"]
+  $sel writepdb $tempfile.pdb
+  $sel delete
+
+  # Revert changes
+
+  foreach {old new} $aliases {
+    set sel [atomselect $molid "resname $prb and name $new"]
+    $sel set name $old
+    $sel set resname IPRO
+    $sel delete
+  }
+
+
+
+  package require psfgen
+  psfcontext reset
+  psfcontext [psfcontext create]
+  topology [file join $PACKAGEPATH probe2.top]
+  topology [file join $PACKAGEPATH cgenff.top]
+  segment TEST {
+    pdb $tempfile.pdb
+  }
+  coordpdb $tempfile.pdb TEST
+  guesscoord
+  # Write structure and coordinate data
+  writepsf $tempfile.psf
+  writepdb $tempfile.pdb
+  set molid [mol new $tempfile.psf]
+  set molid [mol addfile $tempfile.pdb]
+  mol modstyle 0 $molid Licorice 0.2
+
+}
