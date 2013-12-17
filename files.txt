@@ -1,14 +1,18 @@
-112K  mdm2.pdb
-335K  mdm2.psf
-3.9K  sample_1t4e_inhibitor.pdb
-2.2M  sample_ACAM.dx
-2.2M  sample_ACET.dx
-4.5K  sample_all_hotspots.pdb
- 55K  sample_heavyatoms.pdb
-2.2M  sample_IPAM.dx
-2.4M  sample_IPRO.dx
-5.7K  sample.log
-1.3K  sample_site_1.pdb
- 553  sample_site_1_soln_1.pdb
- 553  sample_site_1_soln_2.pdb
- 553  sample_site_1_soln_3.pdb
+ 3.5K  mdm2_output.log
+ 592K  mdm2_output.pdb
+1003K  mdm2_output.psf
+  254  mdm2_output.xsc
+ 112K  mdm2.pdb
+ 335K  mdm2.psf
+ 3.9K  sample_1t4e_inhibitor.pdb
+ 2.2M  sample_ACAM.dx
+ 2.2M  sample_ACET.dx
+ 4.5K  sample_all_hotspots.pdb
+  55K  sample_heavyatoms.pdb
+ 2.2M  sample_IPAM.dx
+ 2.4M  sample_IPRO.dx
+ 5.7K  sample.log
+ 1.3K  sample_site_1.pdb
+  553  sample_site_1_soln_1.pdb
+  553  sample_site_1_soln_2.pdb
+  553  sample_site_1_soln_3.pdb

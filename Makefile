@@ -6,6 +6,7 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
+BASENAME      = $${PWD\#\#*/}
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -42,7 +43,10 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-all: archive latexpdf html
+copy: archive latexpdf html
+	/bin/mv -f $(BASENAME).pdf ../../_build/html/tutorials/$(BASENAME)/
+	/bin/mv -f $(BASENAME)_plugin.* ../../_build/html/tutorials/$(BASENAME)/
+	/bin/mv -f $(BASENAME)_files.* ../../_build/html/tutorials/$(BASENAME)/
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
@@ -157,7 +161,7 @@ doctest:
 
 archive:
 	ls -hgoL --time-style=+ drugui_tutorial_files/ | tail -n +2 | cut -b 14-128 > files.txt
-	tar -czf drugui.tgz drugui/*
-	zip drugui.zip drugui/*
+	tar -czf drugui_plugin.tgz drugui/*
+	zip drugui_plugin.zip drugui/*
 	tar -czf drugui_tutorial_files.tgz drugui_tutorial_files/*
 	zip drugui_tutorial_files.zip drugui_tutorial_files/*

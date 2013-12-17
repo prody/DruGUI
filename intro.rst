@@ -7,18 +7,18 @@ for setup and analysis of simulations described in [AB12]_.
 Installation
 ------------
 
-1. `VMD`_ 1.9.1 or later is required for using GUI. `NAMD`_ is required for
+1. VMD_ 1.9.1 or later is required for using GUI. NAMD_ is required for
    running druggability simulations. Following are required for performing
    druggability analysis calculations:
 
-  * `Python`_ 2.7
-  * `NumPy`_ 1.3 or later
+  * Python_ 2.7
+  * NumPy_ 1.3 or later
 
 
 2. Download one of the following archive files:
 
-  * :download:`drugui.tgz`
-  * :download:`drugui.zip`
+  * `drugui_plugin.tgz`_
+  * `drugui_plugin.zip`_
 
 
 3. Extract contents of the archive and copy :file:`drugui` folder to
@@ -34,12 +34,6 @@ Installation
    type the following command line in the VMD console::
 
      global env; puts $env(VMDDIR)
-
-.. _VMD: http://www.ks.uiuc.edu/Research/vmd/
-.. _NAMD: http://www.ks.uiuc.edu/Research/namd/
-.. _Python: http://www.python.org/download/
-.. _NumPy: http://sourceforge.net/projects/numpy/files/NumPy/
-
 
 DruGUI Plugin
 -------------
@@ -65,8 +59,8 @@ Tutorial Files
 
 Files in the following archives can be used to follow this tutorial:
 
-  * :download:`DruGUI Tutorial Files (TGZ) <drugui_tutorial_files.tgz>`
-  * :download:`DruGUI Tutorial Files (ZIP) <drugui_tutorial_files.zip>`
+  * `DruGUI Tutorial Files (TGZ) <drugui_tutorial_files.tgz>`_
+  * `DruGUI Tutorial Files (ZIP) <drugui_tutorial_files.zip>`_
 
 Here is a list of these files:
 

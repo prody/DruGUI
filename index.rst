@@ -6,8 +6,11 @@ druggability simulations.
 
 .. only:: html
 
-   You can read this documentation in
-   :download:`PDF format <_build/latex/DruGUI_Tutorial.pdf>` too.
+   You can also read this tutorial in `PDF format <drugui_tutorial.pdf>`_.
+
+   Plug-in files: `ZIP <drugui_plugin.zip>`_ `TGZ <drugui_plugin.tgz>`_
+
+   Tutorial files: `ZIP <drugui_tutorial_files.zip>`_ `TGZ <drugui_tutorial_files.tgz>`_
 
 .. toctree::
    :maxdepth: 2
@@ -20,4 +23,5 @@ druggability simulations.
    analyze
    specify
    visuals
+   cgenff
    license

@@ -4,7 +4,7 @@ Analyze a Specific Site
 =======================
 
 This interface can be used to select probe binding hotspots that overlap
-with a given ligand. :
+with a given ligand.
 
 .. figure:: _static/gui_specify.png
    :scale: 80%
