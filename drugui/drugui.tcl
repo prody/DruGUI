@@ -127,11 +127,11 @@ namespace eval ::druggability:: {
   # Logvew window counter
   variable logcount 0
   variable lognames [list]
-  variable titles [list "1) Prepare System" \
-"2) Calculate Grids" \
-"3) Assess Druggability" \
-"4) Evaluate a Site" \
-"5) Visualize Results"]
+  variable titles [list "Prepare System" \
+"Calculate Grids" \
+"Assess Druggability" \
+"Evaluate a Site" \
+"Visualize Results"]
   variable interfaces [list "prepare" "process" "analyze" "evaluate" "visualize"]
   variable which_mode [lindex $titles 0]
 
