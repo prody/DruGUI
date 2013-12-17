@@ -43,7 +43,7 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-copy: archive latexpdf html
+copy: archive latexpdf
 	/bin/mv -f $(BASENAME).pdf ../../_build/html/tutorials/$(BASENAME)/
 	/bin/mv -f $(BASENAME)_plugin.* ../../_build/html/tutorials/$(BASENAME)/
 	/bin/mv -f $(BASENAME)_files.* ../../_build/html/tutorials/$(BASENAME)/

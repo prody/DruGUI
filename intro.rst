@@ -17,8 +17,8 @@ Installation
 
 2. Download one of the following archive files:
 
-  * `drugui_plugin.tgz`_
-  * `drugui_plugin.zip`_
+  * `drugui_plugin.tgz <drugui_plugin.tgz>`_
+  * `drugui_plugin.zip <drugui_plugin.zip>`_
 
 
 3. Extract contents of the archive and copy :file:`drugui` folder to
