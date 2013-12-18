@@ -45,8 +45,8 @@ clean:
 
 copy: archive latexpdf
 	/bin/mv -f _build/latex/$(BASENAME).pdf ../../_build/html/tutorials/$(BASENAME)/
-	/bin/mv -f $(BASENAME)_plugin.* ../../_build/html/tutorials/$(BASENAME)/
-	/bin/mv -f $(BASENAME)_files.* ../../_build/html/tutorials/$(BASENAME)/
+	/bin/mv -f drugui_plugin_files.* ../../_build/html/tutorials/$(BASENAME)/
+	/bin/mv -f drugui_tutorial_files.* ../../_build/html/tutorials/$(BASENAME)/
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
@@ -161,7 +161,7 @@ doctest:
 
 archive:
 	ls -hgoL --time-style=+ drugui_tutorial_files/ | tail -n +2 | cut -b 14-128 > files.txt
-	tar -czf drugui_plugin.tgz drugui/*
-	zip drugui_plugin.zip drugui/*
+	tar -czf drugui_plugin_files.tgz drugui/*
+	zip drugui_plugin_files.zip drugui/*
 	tar -czf drugui_tutorial_files.tgz drugui_tutorial_files/*
 	zip drugui_tutorial_files.zip drugui_tutorial_files/*
