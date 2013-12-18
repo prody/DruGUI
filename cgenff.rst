@@ -17,6 +17,7 @@ There is a large selection of potential probes you can incorporate in
 a simulation. You can get a list of them by running :program:`drugui`
 command, which will print::
 
+  % drugui
   Info) Usage: drugui <psffile> <pdbfile> [options]
   Info)
   Info) Options:
