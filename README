@@ -1,7 +1,7 @@
 DruGUI
 ======
 
-DruGUI is a `VMD`_ plugin GUI and a Python module developed for setup and
+DruGUI is a VMD plugin GUI and a Python module developed for setup and
 analysis of simulations described in Bakan et al., 2012.
 
 Homepage
