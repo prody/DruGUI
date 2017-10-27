@@ -1171,7 +1171,7 @@ contain information on the chemical identity and physical properties of the
 probe molecules:
 
 * name: full chemical name
-* radius: average distance of the central atom other (moleule) heavy atoms
+* radius: average distance of the central atom other (molecule) heavy atoms
 * atomname: name of the central atom, used when writing PDB files
 * n_atoms: number of heavy atoms
 * charge: charge of the probe
