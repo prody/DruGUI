@@ -330,7 +330,7 @@ def get_histr(array, bins=10, **kwargs):
         histr += ' ' * r_width + ' #' + '-' * maxcount + '-#\n'
         for i, count in enumerate(counts):
             histr += format.format(ranges[i]).strip().rjust(r_width) + ' |'
-            histr += line * (count - 1) + marker * (count > 0)
+            histr += line * (count - 1) + marker * int(count > 0)
             histr += ' ' * (maxcount - count + 1) + '|\n'
 
         histr += ' ' * r_width + ' #' + '-' * maxcount + '-#\n'
