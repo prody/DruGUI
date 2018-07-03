@@ -855,7 +855,7 @@ does not contain CHARMM format parameters, NAMD runtime error will occur."}] \
   pack $mfaoo.par_frame.list $mfaoo.par_frame.scroll -side left -fill y -expand 1
 
   grid [button $mfaoo.par_add -text "Add" -width 6 -command [namespace code {
-        set tempfile [tk_getOpenFile -multiple 1\
+        set tempfiles [tk_getOpenFile -multiple 1\
           -filetypes { {{CHARMM parameter files} {.prm .inp}} {{All files} {*}} }]
         if {$tempfiles!=""} {
           foreach tempfile $tempfiles {
