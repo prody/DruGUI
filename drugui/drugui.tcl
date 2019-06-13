@@ -2168,7 +2168,7 @@ proc ::druggability::Write_python {} {
   puts $py_file "dia.set_parameters(temperature=$dia_temp) # K (productive simulation temperature)"
   puts $py_file "dia.set_parameters(delta_g=$dia_delta_g) # kcal/mol (probe binding hotspots with lower values will be evaluated)"
   puts $py_file "dia.set_parameters(n_probes=$dia_n_probes) # (number of probes to be merged to determine achievable affinity of a potential site)"
-  puts $py_file "dia.set_parameters(min_n_probes=$dia_min_n_probes) # (minimum number of probes to be merged for an acceptable soltuion)"
+  puts $py_file "dia.set_parameters(min_n_probes=$dia_min_n_probes) # (minimum number of probes to be merged for an acceptable solution)"
   puts $py_file "dia.set_parameters(merge_radius=$dia_merge_radius) # A (distance within which two probes will be merged)"
   puts $py_file "dia.set_parameters(low_affinity=$dia_low_affinity) # microMolar (potential sites with affinity better than this value will be reported)"
   puts $py_file "dia.set_parameters(n_solutions=$dia_n_solutions) # (number of drug-size solutions to report for each potential binding site)"
