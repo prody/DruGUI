@@ -6,7 +6,6 @@ import gzip
 import time
 import os.path
 import sys
-
 if sys.version_info[0] == 3:
     import _pickle as cPickle
 else:
