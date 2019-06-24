@@ -5,7 +5,13 @@ import os
 import gzip
 import time
 import os.path
-import cPickle
+import sys
+
+if sys.version_info[0] == 3:
+    import _pickle as cPickle
+else:
+    import cPickle
+
 import logging
 import logging.handlers
 
@@ -123,7 +129,7 @@ def get_logger(name, **kwargs):
     console.setFormatter(logging.Formatter(SIGNATURE + ' %(message)s'))
     logger.addHandler(console)
 
-    if not (kwargs.has_key('writelog') and not kwargs['writelog']):
+    if not ('writelog' in kwargs and not kwargs['writelog']):
         logfilename = os.path.join(kwargs.get('workdir', '.'), name+'.log')
         rollover = False
         # if filemode='a' is provided, rollover is not performed
@@ -181,14 +187,14 @@ class ABase(object):
         """
         self.name = name
 
-        if kwargs.has_key('workdir'):
+        if 'workdir' in kwargs:
             workdir = kwargs['workdir']
         else:
             workdir = '.'
 
         kwargs['workdir'] = _set_workdir(workdir)
 
-        if kwargs.has_key('logger'):
+        if 'logger' in kwargs:
             self.logger = kwargs['logger']
         else:
             self.logger = get_logger(name, **kwargs)
@@ -217,7 +223,7 @@ class ABase(object):
         All keyword arguments are passed to the :func:`get_logger` method.
 
         """
-        if not kwargs.has_key('filemode'):
+        if not 'filemode' in kwargs:
             kwargs['filemode'] = 'a'
         self.logger = get_logger(self.name, workdir=self.workdir, **kwargs)
 
@@ -322,9 +328,9 @@ def get_histr(array, bins=10, **kwargs):
     if kwargs.get('orientation', 'h')[0] == 'h':
         counts = counts[-1::-1]
         ranges = ranges[-1::-1]
-        if kwargs.has_key('title'):
+        if 'title' in kwargs:
             histr += kwargs['title'].center(maxcount + r_width + 4) + '\n'
-        if kwargs.has_key('label'):
+        if 'label' in kwargs:
             histr += kwargs['label'] + '\n'
         line = kwargs.get('line', '-')
         histr += ' ' * r_width + ' #' + '-' * maxcount + '-#\n'
@@ -343,7 +349,7 @@ def get_histr(array, bins=10, **kwargs):
         r_width += 1
         clen = len(str(maxcount))
         length = clen + 3 + r_width * bins + 2
-        if kwargs.has_key('title'):
+        if 'title'in kwargs:
             histr += kwargs['title'].center(length) + '\n'
 
         histr += '#' * clen + ' --' + '-' * r_width * bins + '--' + '\n'
@@ -363,7 +369,7 @@ def get_histr(array, bins=10, **kwargs):
                     [format.format(x).strip().center(r_width)
                         for x in ranges[:-1]]
                     )  + '\n'
-        if kwargs.has_key('label'):
+        if 'label'in kwargs:
             histr += kwargs['label'].center(length) + '\n'
 
     return histr
@@ -1596,62 +1602,62 @@ class DIA(ABase):
         and their default values.
 
         """
-        if kwargs.has_key('temperature'):
+        if 'temperature' in kwargs:
             self.parameters['temperature'] = float(kwargs['temperature'])
             kwargs.pop('temperature')
             self.logger.info('Parameter: temperature {0:.2f} K'.format(
                                             self.parameters['temperature']))
 
-        if kwargs.has_key('n_frames'):
+        if 'n_frames' in kwargs:
             self.parameters['n_frames'] = int(kwargs['n_frames'])
             kwargs.pop('n_frames')
             self.logger.info('Parameter: n_frames {0:d}'.format(
                                                 self.parameters['n_frames']))
 
-        if kwargs.has_key('delta_g'):
+        if 'delta_g' in kwargs:
             self.parameters['delta_g'] = float(kwargs['delta_g'])
             kwargs.pop('delta_g')
             self.logger.info('Parameter: delta_g {0:.3f} kcal/mol'
                              .format(self.parameters['delta_g']))
 
-        if kwargs.has_key('n_probes'):
+        if 'n_probes' in kwargs:
             self.parameters['n_probes'] = int(kwargs['n_probes'])
             kwargs.pop('n_probes')
             self.logger.info('Parameter: n_probes {0:d}'.format(
                                                 self.parameters['n_probes']))
 
-        if kwargs.has_key('min_n_probes'):
+        if 'min_n_probes' in kwargs:
             self.parameters['min_n_probes'] = int(kwargs['min_n_probes'])
             kwargs.pop('min_n_probes')
             self.logger.info('Parameter: min_n_probes {0:d}'.format(
                                             self.parameters['min_n_probes']))
-        if kwargs.has_key('n_solutions'):
+        if 'n_solutions' in kwargs:
             self.parameters['n_solutions'] = int(kwargs['n_solutions'])
             kwargs.pop('n_solutions')
             self.logger.info('Parameter: n_solutions {0:d}'.format(
                                             self.parameters['n_solutions']))
 
 
-        if kwargs.has_key('merge_radius'):
+        if 'merge_radius' in kwargs:
             self.parameters['merge_radius'] = float(kwargs['merge_radius'])
             kwargs.pop('merge_radius')
             self.logger.info('Parameter: merge_radius {0:.1f} A'.format(
                                             self.parameters['merge_radius']))
 
-        if kwargs.has_key('low_affinity'):
+        if 'low_affinity' in kwargs:
             self.parameters['low_affinity'] = convert_Kd_to_dG(
                                 float(kwargs['low_affinity']) * 1e-6)
             kwargs.pop('low_affinity')
             self.logger.info('Parameter: low_affinity {0[0]:.2f} '
             '{0[1]:s}'.format(format_Kd(convert_dG_to_Kd(
                                             self.parameters['low_affinity']))))
-        if kwargs.has_key('max_charge'):
+        if 'max_charge' in kwargs:
             self.parameters['max_charge'] = float(kwargs['max_charge'])
             kwargs.pop('max_charge')
             self.logger.info('Parameter: max_charge {0:.1f} e'.format(
                                                 self.parameters['max_charge']))
 
-        if kwargs.has_key('n_charged'):
+        if 'n_charged' in kwargs:
             self.parameters['n_charged'] = int(kwargs['n_charged'])
             kwargs.pop('n_charged')
             self.logger.info('Parameter: n_charged {0:d}'.format(
@@ -1694,7 +1700,7 @@ class DIA(ABase):
             if items[0] == 'probe':
                 probes.append((items[1], items[2]))
             else:
-                if kwargs.has_key(items[0]):
+                if items[0] in kwargs:
                     raise DIAError('{0:s} parameter is repeated in {1:s}'
                                    .format(items[0], filename))
                 kwargs[items[0]] = items[1]
@@ -1718,14 +1724,14 @@ class DIA(ABase):
         :type filename: str
 
         """
-        if not PROBE_CARDS.has_key(probe_type):
+        if not probe_type in PROBE_CARDS:
             raise DIAError('Probe type {0:s} is not recognized.'
                            .format(str(probe_type)))
         for probe in self._probes:
             if probe.grid.filename == filename:
                 raise DIAError('Probe grid file {0:s} has already been added '
                                'to the analysis.'.format(filename))
-        if self._dict.has_key(probe_type):
+        if probe_type in self._dict:
             raise DIAError('Probe type {0:s} has already been added '
                            'to the analysis.'.format(probe_type))
 
@@ -1750,7 +1756,7 @@ class DIA(ABase):
             else:
                 DIAError('Combined probe data is not available yet.')
         else:
-            if self._dict.has_key(probe):
+            if probe in self._dict:
                 return self._dict[probe]
             else:
                 DIAError('{0:s} is not recognized as a probe name or type'
@@ -1823,7 +1829,7 @@ class DIA(ABase):
                              'below {0:.f} kcal/mol (~{0:.0f} folds '
                              'enrichment)'.format(delta_g, enrichment))
         spots = zip(-probes.grid.array[which], which[0], which[1], which[2])
-        spots.sort()
+        spots = sorted(spots)
         spots = np.array(spots)
         radii = np.array([probe.radius for probe in self._probes])
         charges = np.array([probe.charge for probe in self._probes])
@@ -2019,7 +2025,7 @@ class DIA(ABase):
                             mtuple = list(molecule)
                             mtuple.sort()
                             mtuple = tuple(mtuple)
-                            if not mdict.has_key(mtuple):
+                            if not mtuple in mdict:
                                 mdict[mtuple] = molecule
                                 mol_delta_g = hotspots[molecule, 0].sum()
                                 mol_charge = hotspots[molecule, 6].sum()
@@ -2304,7 +2310,7 @@ class DIA(ABase):
                         ilists[2].append(index[2]+k)
 
         spots = zip(-self._all.grid.array[ilists], ilists[0], ilists[1], ilists[2])
-        spots.sort()
+        spots = sorted(spots)
         spots = np.array(spots)
         spots = spots[spots[:, 0] < -population, :]
 
