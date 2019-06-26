@@ -68,7 +68,7 @@ namespace eval ::druggability:: {
   variable percent_acetipam 20
   variable percent_total 100
   # solvation and ionization
-  variable solvent_padding 6
+  variable solvent_padding 10
   variable neutralize 1
   # output options
   variable output_prefix
@@ -3204,7 +3204,7 @@ proc drugui_usage { } {
   vmdcon -info "    -rotate <yes/No>"
   vmdcon -info "      (rotate molecule to minimize water volume)"
   vmdcon -info "    -padding <distance>"
-  vmdcon -info "      (minimum solvent box padding in all directions, default is 6 A)"
+  vmdcon -info "      (minimum solvent box padding in all directions, default is 10 A)"
   vmdcon -info "    -boundary <distance>"
   vmdcon -info "      (minimum distance between water/probe and solute, default is 2.4 A)"
   vmdcon -info "    -neutral <Yes/no>"
@@ -3440,7 +3440,7 @@ proc drugui_core {args} {
   }
   dict unset opts "-rotate"
 
-  set padding 6
+  set padding 10
   if {[dict exists $opts "-padding"]} {
     set padding [dict get $opts "-padding"]
   }
