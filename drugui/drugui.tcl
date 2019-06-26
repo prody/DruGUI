@@ -2726,6 +2726,12 @@ proc ::druggability::Prepare_system {} {
       }
       lappend par_filenames $par_filename
     }
+	
+	set pbc_pme [cal_PBC_PME top]
+	set pbc_box [lindex $pbc_pme 0]
+	# regsub -all {\n} $pbc_box {\\n} pbc_box
+	set pme_size [lindex $pbc_pme 1]
+	# regsub -all {\n} $pme_size {\\n} pme_size
 
     puts $log_file "Simulation: Parameter files are copied into ./parameter folder."
     set minfix "_min"
@@ -2756,9 +2762,11 @@ proc ::druggability::Prepare_system {} {
     puts $namd_file "conskfile       ../$output_prefix.pdb"
     puts $namd_file "conskcol        B"
     puts $namd_file "constraintScaling  1.0"
+	puts $namd_file "$pbc_box"
     puts $namd_file "PME             yes"
-    puts $namd_file "PMEGridSpacing  1.0"
-    puts $namd_file "extendedSystem  ../$output_prefix.xsc"
+	puts $namd_file "$pme_size"
+    # puts $namd_file "PMEGridSpacing  1.0"
+    # puts $namd_file "extendedSystem  ../$output_prefix.xsc"
     puts $namd_file "wrapWater       on"
     puts $namd_file "wrapAll         on"
     puts $namd_file "minimize        2000"
@@ -2828,7 +2836,8 @@ proc ::druggability::Prepare_system {} {
       puts $namd_file "langevinPistonDecay   50.0"
       puts $namd_file "langevinPistonTemp    300"
       #puts $namd_file "rescaleFreq      100"
-      puts $namd_file "extendedSystem  ../$output_prefix.xsc"
+      # puts $namd_file "extendedSystem  ../$output_prefix.xsc"
+      puts $namd_file "extendedSystem  ../$output_prefix$minfix/min.xsc"
       puts $namd_file "wrapWater       on"
       puts $namd_file "wrapAll         on"
       puts $namd_file "reinitvels      100"
@@ -2870,7 +2879,8 @@ proc ::druggability::Prepare_system {} {
         puts $namd_file "pairlistdist    12.0"
         puts $namd_file "margin          1.0"
         puts $namd_file "exclude         scaled1-4"
-        puts $namd_file "velocities      $output_prefix.vel"
+        # puts $namd_file "velocities      $output_prefix.vel"
+        puts $namd_file "velocities      eq1.vel"
         puts $namd_file "seed            $randomSeed"
         puts $namd_file "constraints     on"
         puts $namd_file "consref         ../$output_prefix.pdb"
@@ -2884,7 +2894,8 @@ proc ::druggability::Prepare_system {} {
         #puts $namd_file "langevinTemp     300"
         puts $namd_file "langevinDamping  5"
         puts $namd_file "langevinHydrogen off"
-        puts $namd_file "extendedSystem  $output_prefix.xsc"
+        # puts $namd_file "extendedSystem  $output_prefix.xsc"
+        puts $namd_file "extendedSystem  eq1.xsc"
         puts $namd_file "wrapWater       on"
         puts $namd_file "wrapAll         on"
         puts $namd_file "for \{set T 300\} \{\$T < 500\} \{incr T  10\} \{"
@@ -2927,7 +2938,8 @@ proc ::druggability::Prepare_system {} {
         puts $namd_file "pairlistdist    12.0"
         puts $namd_file "margin          1.0"
         puts $namd_file "exclude         scaled1-4"
-        puts $namd_file "velocities      $output_prefix.vel"
+        # puts $namd_file "velocities      $output_prefix.vel"
+        puts $namd_file "velocities      eq2.vel"
         puts $namd_file "seed            $randomSeed"
         #puts $namd_file "constraints     on"
         #puts $namd_file "consref         ../$output_prefix.pdb"
@@ -2949,7 +2961,8 @@ proc ::druggability::Prepare_system {} {
         puts $namd_file "langevinPistonPeriod  100.0"
         puts $namd_file "langevinPistonDecay   50.0"
         puts $namd_file "langevinPistonTemp    300"
-        puts $namd_file "extendedSystem  $output_prefix.xsc"
+        # puts $namd_file "extendedSystem  $output_prefix.xsc"
+		puts $namd_file "extendedSystem  eq2.xsc"
         puts $namd_file "wrapWater       on"
         puts $namd_file "wrapAll         on"
         puts $namd_file "run                  300000"
@@ -2983,7 +2996,8 @@ proc ::druggability::Prepare_system {} {
       puts $namd_file "pairlistdist    12.0"
       puts $namd_file "margin          1.0"
       puts $namd_file "exclude         scaled1-4"
-      puts $namd_file "velocities      $output_prefix.vel"
+      # puts $namd_file "velocities      $output_prefix.vel"
+      puts $namd_file "velocities      eq3.vel"
       puts $namd_file "seed            $randomSeed"
       puts $namd_file "PME             yes"
       puts $namd_file "PMEGridSpacing  1.0"
@@ -3000,7 +3014,8 @@ proc ::druggability::Prepare_system {} {
       puts $namd_file "langevinPistonPeriod  100.0"
       puts $namd_file "langevinPistonDecay   50.0"
       puts $namd_file "langevinPistonTemp    300"
-      puts $namd_file "extendedSystem  $output_prefix.xsc"
+      # puts $namd_file "extendedSystem  $output_prefix.xsc"
+	  puts $namd_file "extendedSystem  eq3.xsc"
       puts $namd_file "wrapWater       on"
       puts $namd_file "wrapAll         on"
       puts $namd_file "run                  [expr $sim_length * 500000]"
@@ -3051,7 +3066,8 @@ proc ::druggability::Prepare_system {} {
       puts $namd_file "langevinPistonPeriod  100.0"
       puts $namd_file "langevinPistonDecay   50.0"
       puts $namd_file "langevinPistonTemp    300"
-      puts $namd_file "extendedSystem  $output_prefix.xsc"
+      # puts $namd_file "extendedSystem  $output_prefix.xsc"
+	  puts $namd_file "extendedSystem  ../$output_prefix$minfix/sim.xsc"
       puts $namd_file "wrapWater       on"
       puts $namd_file "wrapAll         on"
       puts $namd_file "run             XXXXX"
@@ -4001,6 +4017,12 @@ proc drugui_core {args} {
     lappend nonbonded "exclude         scaled1-4"
     set nonbonded [join $nonbonded "\n"]
 
+	set pbc_pme [cal_PBC_PME top]
+	set pbc_box [lindex $pbc_pme 0]
+	# regsub -all {\n} $pbc_box {\\n} pbc_box
+	set pme_size [lindex $pbc_pme 1]
+	# regsub -all {\n} $pme_size {\\n} pme_size
+
     loginfo $logfile "Simulation: Parameter files are copied into ./parameter folder."
     set minfix "_min"
     file mkdir "$outputname$minfix"
@@ -4026,9 +4048,11 @@ proc drugui_core {args} {
     puts $namd_file "conskfile       ../$prefix.pdb"
     puts $namd_file "conskcol        B"
     puts $namd_file "constraintScaling  1.0"
+	puts $namd_file "$pbc_box"
     puts $namd_file "PME             yes"
-    puts $namd_file "PMEGridSpacing  1.0"
-    puts $namd_file "extendedSystem  ../$prefix.xsc"
+	puts $namd_file "$pme_size"
+    # puts $namd_file "PMEGridSpacing  1.0"
+    # puts $namd_file "extendedSystem  ../$output_prefix.xsc"
     puts $namd_file "wrapWater       on"
     puts $namd_file "wrapAll         on"
     puts $namd_file "minimize        10000"
@@ -4097,7 +4121,8 @@ proc drugui_core {args} {
       puts $namd_file $simlines2
       puts $namd_file "langevinTemp     100"
       puts $namd_file "langevinPistonTemp    100"
-      puts $namd_file "extendedSystem  ../$prefix.xsc"
+      # puts $namd_file "extendedSystem  ../$prefix.xsc"
+	  puts $namd_file "extendedSystem  ../$prefix$minfix/min.xsc"
       puts $namd_file "reinitvels      100"
       puts $namd_file "for \{set T 100\} \{\$T < 300\} \{incr T 10\} \{"
       puts $namd_file "    langevinTemp      \$T;"
@@ -4309,3 +4334,50 @@ proc drugui_test {prb} {
   mol modstyle 0 $molid Licorice 0.2
 
 }
+
+
+# calculates PME number from PBC length
+proc cal_pme {cell_length} {
+	for {set i 2} {$i < 10000} {incr i 1} {
+		set num $i
+		while {[expr $num%2]==0 && $num>0} {
+			set num [expr $num/2]
+		}
+		while {[expr $num%3]==0 && $num>0} {
+			set num [expr $num/3]
+		}
+		while {[expr $num%5]==0 && $num>0} {
+			set num [expr $num/5]
+		}
+		if { $num==1 && $i>=$cell_length } {
+			return $i
+			#break
+		}
+	}
+}
+# set cal_pme 57.5
+
+# calcute the PBC box and PME size for pdb
+proc cal_PBC_PME {{mol top}} {
+	set all [atomselect top all]
+	set center [measure center $all]
+	set minmax [measure minmax $all]
+	set center_x [lindex $center 0]
+	set center_y [lindex $center 1]
+	set center_z [lindex $center 2]
+	set min_x [lindex $minmax 0 0]
+	set max_x [lindex $minmax 1 0]
+	set min_y [lindex $minmax 0 1]
+	set max_y [lindex $minmax 1 1]
+	set min_z [lindex $minmax 0 2]
+	set max_z [lindex $minmax 1 2]
+	set length_x [expr $max_x-$min_x]
+	set length_y [expr $max_y-$min_y]
+	set length_z [expr $max_z-$min_z]
+  
+	set pbc_box "[format "cellBasisVector1 	%.2f 		0 		0 " $length_x]\n[format "cellBasisVector2 	0 		%.2f 		0 " $length_y]\n[format "cellBasisVector3 	0 		0 		%.2f " $length_z]\n[format "cellOrigin 			%.2f 	%.2f 	%.2f " $center_x $center_y $center_z]"
+	set pme_size "[format "PMEGridSizeX        %d" [cal_pme $length_x]]\n[format "PMEGridSizeY        %d" [cal_pme $length_y]]\n[format "PMEGridSizeZ        %d" [cal_pme $length_z]]"
+	
+	return [list $pbc_box $pme_size]
+}
+
