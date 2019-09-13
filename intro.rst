@@ -14,6 +14,8 @@ Installation
   * Python_ 2.7
   * NumPy_ 1.3 or later
 
+.. _NAMD: http://www.ks.uiuc.edu/Research/namd/
+
 
 2. Download one of the following archive files:
 
@@ -76,3 +78,4 @@ following paper:
    Allosteric Proteins by Dynamics Simulations in the Presence of Probe
    Molecules <http://pubs.acs.org/doi/abs/10.1021/ct300117j>`_
    *J Chem Theory Comput* **2012** 8(7):2435-2447
+

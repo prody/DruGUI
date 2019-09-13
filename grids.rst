@@ -60,5 +60,4 @@ Output files are occupancy grids for each probe type, e.g.
 :file:`prefix_IPRO.dx`, and selected atom types.
 
 
-.. _VMD: http://www.ks.uiuc.edu/Research/vmd/
 .. _Chimera Volume Viewer: http://www.cgl.ucsf.edu/chimera/docs/ContributedSoftware/volumeviewer/framevolumeviewer.html
