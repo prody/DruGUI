@@ -61,3 +61,5 @@ Output files are occupancy grids for each probe type, e.g.
 
 
 .. _Chimera Volume Viewer: http://www.cgl.ucsf.edu/chimera/docs/ContributedSoftware/volumeviewer/framevolumeviewer.html
+
+.. _VMD: http://www.ks.uiuc.edu/Research/vmd/

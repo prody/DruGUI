@@ -68,15 +68,20 @@ namespace eval ::druggability:: {
   variable percent_acetipam 20
   variable percent_total 100
   # solvation and ionization
-  variable solvent_padding 6
+  variable solvent_padding 10
   variable neutralize 1
   # output options
   variable output_prefix
   variable write_conf 1
   variable n_sims 1
   variable sim_length 40
-  variable par_files
-
+  variable par_files []
+  
+  lappend par_files [file join $env(DRUGGABILITY_PATH) probe.prm]
+  lappend par_files [file join $env(CHARMMPARDIR) par_all27_prot_lipid_na.inp]
+  variable top_files []
+  lappend top_files [file join $env(DRUGGABILITY_PATH) probe.top]
+  lappend top_files [file join $env(CHARMMTOPDIR) top_all27_prot_lipid_na.inp]
 
   # Variables for trajectory analysis
   # input files
@@ -400,6 +405,7 @@ proc ::druggability::druggui {} {
     raise .druggui
     return
   }
+# destroy .druggui; source $env(DRUGGABILITY_PATH)/drugui.tcl; ::druggability::druggui
 
   # Initialize window
   set w [toplevel .druggui]
@@ -597,7 +603,7 @@ make sure that the protonation states of histidines, cysteines, or other relevan
 residues are set properly and, if any, sulfide bridging cysteines are patched correctly."}] \
     -row 1 -column 0 -sticky w
   grid [label $mfaif.psf_label -text "PSF:"] -row 1 -column 1 -sticky w
-  grid [entry $mfaif.psf_path -width 38 \
+  grid [entry $mfaif.psf_path -width 50 \
       -textvariable ::druggability::protein_psf] \
     -row 1 -column 2 -sticky ew
   grid [button $mfaif.psf_browse -text "Browse" -width 6 -pady 1 -command {
@@ -615,7 +621,7 @@ entities described in the PSF file."}] \
     -row 2 -column 0 -sticky w
   grid [label $mfaif.pdb_label -text "PDB:"] \
     -row 2 -column 1 -sticky w
-  grid [entry $mfaif.pdb_path -width 38 \
+  grid [entry $mfaif.pdb_path -width 50 \
       -textvariable ::druggability::protein_pdb] \
     -row 2 -column 2 -sticky ew
   grid [button $mfaif.pdb_browse -text "Browse" -width 6 -pady 1 -command {
@@ -767,6 +773,51 @@ system. A charged system (if the protein is charged) may be obtained by unchecki
     -row 0 -column 6 -sticky w
   pack $mfasi -side top -ipadx 0 -ipady 5 -fill x -expand 1
 
+  
+  set mfatf [labelframe $mfa.topology_files \
+    -text "Topology files:" -bd 2]
+  grid [button $mfatf.top_help -text "?" -padx 0 -pady 0 -command {
+      tk_messageBox -type ok -title "HELP" \
+        -message "If a system requires topology files in addition those defined in\
+top_all27_prot_lipid_na.inp, additional filenames may be specified here."}] \
+    -row 0 -column 0 -sticky w
+  grid [frame $mfatf.top_frame] \
+    -row 0 -column 1 -rowspan 2 -sticky w
+  scrollbar $mfatf.top_frame.scroll -command "$mfatf.top_frame.list yview"
+  listbox $mfatf.top_frame.list \
+    -activestyle dotbox -yscroll "$mfatf.top_frame.scroll set" \
+    -width 55 -height 3 -setgrid 1 -selectmode browse \
+    -listvariable ::druggability::top_files
+  frame $mfatf.top_frame.buttons
+  pack $mfatf.top_frame.list $mfatf.top_frame.scroll -side left -fill y -expand 1
+  pack $mfatf -side top -ipadx 0 -ipady 5 -fill x -expand 1
+
+  grid [button $mfatf.top_add -text "Add" -width 6 -command [namespace code {
+        set tempfiles [tk_getOpenFile -multiple 1\
+          -filetypes { {{CHARMM topology files} {.top .rtf .inp .str}} {{All files} {*}} }]
+        if {$tempfiles!=""} {
+          foreach tempfile $tempfiles {
+            if {[lsearch $::druggability::top_files $tempfile] > -1} {
+              tk_messageBox -type ok -title "WARNING" \
+                -message "$tempfile has already been added to the list."
+            } else {
+              lappend ::druggability::top_files $tempfile
+            }
+          }
+        }
+        }] -pady 1] \
+  -row 0 -column 2 -sticky w
+  grid [button $mfatf.top_delete -text "Remove" -width 6 \
+        -command [namespace code {
+      foreach i [.druggui.main_frame.prepare.topology_files.top_frame.list curselection] {
+        .druggui.main_frame.prepare.topology_files.top_frame.list delete $i
+      } }] -pady 1] \
+  -row 1 -column 2 -sticky w
+
+  pack $mfatf -side top -ipadx 0 -ipady 5 -fill x -expand 1
+
+  
+  
   set mfaoo [labelframe $mfa.output_options -text "Output options:" -bd 2]
 
   grid [button $mfaoo.outdir_help -text "?" -padx 0 -pady 0 -command {
@@ -849,14 +900,14 @@ does not contain CHARMM format parameters, NAMD runtime error will occur."}] \
   scrollbar $mfaoo.par_frame.scroll -command "$mfaoo.par_frame.list yview"
   listbox $mfaoo.par_frame.list \
     -activestyle dotbox -yscroll "$mfaoo.par_frame.scroll set" \
-    -width 29 -height 3 -setgrid 1 -selectmode browse \
+    -width 41 -height 3 -setgrid 1 -selectmode browse \
     -listvariable ::druggability::par_files
   frame $mfaoo.par_frame.buttons
   pack $mfaoo.par_frame.list $mfaoo.par_frame.scroll -side left -fill y -expand 1
 
   grid [button $mfaoo.par_add -text "Add" -width 6 -command [namespace code {
         set tempfiles [tk_getOpenFile -multiple 1\
-          -filetypes { {{CHARMM parameter files} {.prm .inp}} {{All files} {*}} }]
+          -filetypes { {{CHARMM parameter files} {.prm .inp .str}} {{All files} {*}} }]
         if {$tempfiles!=""} {
           foreach tempfile $tempfiles {
             if {[lsearch $::druggability::par_files $tempfile] > -1} {
@@ -2253,6 +2304,7 @@ proc ::druggability::Prepare_system {} {
   variable n_sims
   variable sim_length
   variable par_files
+  variable top_files
   variable outputdir
 
   if {$outputdir != ""} {
@@ -2413,6 +2465,7 @@ proc ::druggability::Prepare_system {} {
     set addWater [atomselect top "water and name OH2 and exwithin $pad of index $indicesWater"]
     while {[$addWater num] < $howManyMoreWater && $pad < [expr $solvent_padding+5] } {
         set pad [expr $pad + 0.1]
+		$addWater delete
         set addWater [atomselect top "water and name OH2 and exwithin $pad of index $indicesWater"]
     }
     set indicesWater "$indicesWater [lrange [$addWater get index] 0 [expr $howManyMoreWater - 1]]"
@@ -2429,6 +2482,7 @@ proc ::druggability::Prepare_system {} {
     set addProbe [atomselect top "resname IPRO and name OH2 and exwithin $pad of index $indicesProbe"]
     while {[$addProbe num] < $howManyMoreProbe && $pad < [expr $solvent_padding+5]} {
         set pad [expr $pad + 0.25]
+		$addProbe delete
         set addProbe [atomselect top "resname IPRO and name OH2 and exwithin $pad of index $indicesProbe"]
     }
     set indicesProbe "$indicesProbe [lrange [$addProbe get index] 0 [expr $howManyMoreProbe - 1]]"
@@ -2444,7 +2498,10 @@ proc ::druggability::Prepare_system {} {
   package require psfgen
   psfcontext reset
   if {$percent_total == 100} {topology [file join $DRUGGABILITY_PATH probe.top] }
-  topology [file join $env(CHARMMTOPDIR) top_all27_prot_lipid_na.inp]
+  # topology [file join $env(CHARMMTOPDIR) top_all27_prot_lipid_na.inp]
+  foreach top_file $top_files {
+	topology $top_file
+  }
   readpsf $protein_psf
   coordpdb $protein_pdb
 
@@ -2458,11 +2515,13 @@ proc ::druggability::Prepare_system {} {
       set sel [atomselect top "same residue as index $indexProbe"]
       $sel set resid $residProbe
       $sel set chain "X"
+	  $sel delete
       incr residProbe
     }
     # Write probe molecules into an intermediate file
     set sel [atomselect top "same residue as index $indicesProbe"]
     $sel writepdb "$intermediate.pdb"
+	$sel delete
 
     # Calculate number of copies of each probe
     set howmanyIsopropanol [::tcl::mathfunc::int [expr $nProbe * $percent_ipro / 100.0]]
@@ -2526,12 +2585,15 @@ proc ::druggability::Prepare_system {} {
     # While at it, renumber water molecule resids starting from 1 for each segment
     set residWater 1
     foreach indexWater [$sel get index] {
+	  $sel delete
       set sel [atomselect top "same residue as index $indexWater"]
       $sel set resid $residWater
       incr residWater
     }
+	$sel delete
     set sel [atomselect top "segid $segidWT and (same residue as index $indicesWater)"]
     $sel writepdb "$intermediate.pdb"
+	$sel delete
     segment $segidWT {pdb "$intermediate.pdb"}
     coordpdb "$intermediate.pdb" $segidWT
   }
@@ -2648,14 +2710,14 @@ proc ::druggability::Prepare_system {} {
     }
     set pardir [file join "$outputdir" "parameters"]
     if {![file exists "$pardir"]} {file mkdir "$pardir"}
-    if {![file exists [file join "$pardir" "par_all27_prot_lipid_na.inp"]]} {
-      file copy [file join $env(CHARMMPARDIR) par_all27_prot_lipid_na.inp] [file join "$pardir" "par_all27_prot_lipid_na.inp"]
-    }
-    if {$percent_acetipam > 0} {
-      if {![file exists [file join "$pardir" "probe.prm"]]} {
-        file copy [file join $DRUGGABILITY_PATH probe.prm] [file join "$pardir" "probe.prm"]
-      }
-    }
+    # if {![file exists [file join "$pardir" "par_all27_prot_lipid_na.inp"]]} {
+      # file copy [file join $env(CHARMMPARDIR) par_all27_prot_lipid_na.inp] [file join "$pardir" "par_all27_prot_lipid_na.inp"]
+    # }
+    # if {$percent_acetipam > 0} {
+      # if {![file exists [file join "$pardir" "probe.prm"]]} {
+        # file copy [file join $DRUGGABILITY_PATH probe.prm] [file join "$pardir" "probe.prm"]
+      # }
+    # }
     set par_filenames [list]
     foreach par_file $par_files {
       set par_filename [lindex [file split $par_file] end]
@@ -2664,6 +2726,12 @@ proc ::druggability::Prepare_system {} {
       }
       lappend par_filenames $par_filename
     }
+	
+	set pbc_pme [cal_PBC_PME top]
+	set pbc_box [lindex $pbc_pme 0]
+	# regsub -all {\n} $pbc_box {\\n} pbc_box
+	set pme_size [lindex $pbc_pme 1]
+	# regsub -all {\n} $pme_size {\\n} pme_size
 
     puts $log_file "Simulation: Parameter files are copied into ./parameter folder."
     set minfix "_min"
@@ -2672,14 +2740,14 @@ proc ::druggability::Prepare_system {} {
     puts $namd_file "coordinates     ../$output_prefix.pdb"
     puts $namd_file "structure       ../$output_prefix.psf"
     puts $namd_file "paraTypeCharmm  on"
-    puts $namd_file "parameters      ../parameters/par_all27_prot_lipid_na.inp"
-    if {$percent_acetipam > 0} {puts $namd_file "parameters      ../parameters/probe.prm"}
+    # puts $namd_file "parameters      ../parameters/par_all27_prot_lipid_na.inp"
+    # if {$percent_acetipam > 0} {puts $namd_file "parameters      ../parameters/probe.prm"}
     foreach par_filename $par_filenames {puts $namd_file "parameters      ../parameters/$par_filename"}
     puts $namd_file "outputname      $output_prefix"
     puts $namd_file "binaryoutput    no"
+    # puts $namd_file "binaryrestart   no"
     puts $namd_file "restartname     $output_prefix"
     puts $namd_file "restartfreq     10000"
-    puts $namd_file "binaryrestart   no"
     puts $namd_file "timestep        1.0"
     puts $namd_file "cutoff          10.0"
     puts $namd_file "switching       on"
@@ -2694,11 +2762,13 @@ proc ::druggability::Prepare_system {} {
     puts $namd_file "conskfile       ../$output_prefix.pdb"
     puts $namd_file "conskcol        B"
     puts $namd_file "constraintScaling  1.0"
+	puts $namd_file "$pbc_box"
     puts $namd_file "PME             yes"
-    puts $namd_file "PMEGridSpacing  1.0"
-    puts $namd_file "extendedSystem  ../$output_prefix.xsc"
+	puts $namd_file "$pme_size"
+    # puts $namd_file "PMEGridSpacing  1.0"
+    # puts $namd_file "extendedSystem  ../$output_prefix.xsc"
     puts $namd_file "wrapWater       on"
-    #puts $namd_file "wrapAll         on"
+    puts $namd_file "wrapAll         on"
     puts $namd_file "minimize        2000"
     close $namd_file
     puts $sh_file "cd $output_prefix$minfix"
@@ -2708,12 +2778,13 @@ proc ::druggability::Prepare_system {} {
 
     for {set i 1} {$i <= $n_sims} {incr i} {
       # MKDIR for each simulation
-      if {$i == 1} {
-        set suffix "_sim"
-      } else {
-        set suffix "_sim$i"
-      }
-      file mkdir [file join "$outputdir" "$output_prefix$suffix"]
+      # if {$i == 1} {
+        # set suffix "_sim"
+      # } else {
+        # set suffix "_sim$i"
+      # }
+	 set suffix "_sim$i"
+     file mkdir [file join "$outputdir" "$output_prefix$suffix"]
       puts $sh_file "cd ../$output_prefix$suffix"
       set randomSeed [::tcl::mathfunc::int [expr rand() * 1000000]]
 
@@ -2721,14 +2792,14 @@ proc ::druggability::Prepare_system {} {
       puts $namd_file "coordinates     ../$output_prefix$minfix/$output_prefix.coor"
       puts $namd_file "structure       ../$output_prefix.psf"
       puts $namd_file "paraTypeCharmm  on"
-      puts $namd_file "parameters      ../parameters/par_all27_prot_lipid_na.inp"
-      if {$percent_acetipam > 0} {puts $namd_file "parameters      ../parameters/probe.prm"}
+      # puts $namd_file "parameters      ../parameters/par_all27_prot_lipid_na.inp"
+      # if {$percent_acetipam > 0} {puts $namd_file "parameters      ../parameters/probe.prm"}
       foreach par_filename $par_filenames {puts $namd_file "parameters      ../parameters/$par_filename"}
       puts $namd_file "outputname      $output_prefix"
       puts $namd_file "binaryoutput    no"
+      # puts $namd_file "binaryrestart   no"
       puts $namd_file "restartname     $output_prefix"
       puts $namd_file "restartfreq     2000"
-      puts $namd_file "binaryrestart   no"
       puts $namd_file "DCDfreq         2000"
       puts $namd_file "DCDfile         eq1.dcd"
       puts $namd_file "outputEnergies  2000"
@@ -2765,9 +2836,10 @@ proc ::druggability::Prepare_system {} {
       puts $namd_file "langevinPistonDecay   50.0"
       puts $namd_file "langevinPistonTemp    300"
       #puts $namd_file "rescaleFreq      100"
-      puts $namd_file "extendedSystem  ../$output_prefix.xsc"
+      # puts $namd_file "extendedSystem  ../$output_prefix.xsc"
+      puts $namd_file "extendedSystem  ../$output_prefix$minfix/min.xsc"
       puts $namd_file "wrapWater       on"
-      #puts $namd_file "wrapAll         on"
+      puts $namd_file "wrapAll         on"
       puts $namd_file "reinitvels      100"
       puts $namd_file "for \{set T 100\} \{\$T < 300\} \{incr T 10\} \{"
       #puts $namd_file "    rescaleTemp      \$T;"
@@ -2786,14 +2858,14 @@ proc ::druggability::Prepare_system {} {
         puts $namd_file "coordinates     $output_prefix.coor"
         puts $namd_file "structure       ../$output_prefix.psf"
         puts $namd_file "paraTypeCharmm  on"
-        puts $namd_file "parameters      ../parameters/par_all27_prot_lipid_na.inp"
-        if {$percent_acetipam > 0} {puts $namd_file "parameters      ../parameters/probe.prm"}
+        # puts $namd_file "parameters      ../parameters/par_all27_prot_lipid_na.inp"
+        # if {$percent_acetipam > 0} {puts $namd_file "parameters      ../parameters/probe.prm"}
         foreach par_filename $par_filenames {puts $namd_file "parameters      ../parameters/$par_filename"}
         puts $namd_file "outputname      $output_prefix"
         puts $namd_file "binaryoutput    no"
+        # puts $namd_file "binaryrestart   no"
         puts $namd_file "restartname     $output_prefix"
         puts $namd_file "restartfreq     2000"
-        puts $namd_file "binaryrestart   no"
         puts $namd_file "DCDfreq         2000"
         puts $namd_file "DCDfile         eq2.dcd"
         puts $namd_file "outputEnergies  2000"
@@ -2807,7 +2879,8 @@ proc ::druggability::Prepare_system {} {
         puts $namd_file "pairlistdist    12.0"
         puts $namd_file "margin          1.0"
         puts $namd_file "exclude         scaled1-4"
-        puts $namd_file "velocities      $output_prefix.vel"
+        # puts $namd_file "velocities      $output_prefix.vel"
+        puts $namd_file "velocities      eq1.vel"
         puts $namd_file "seed            $randomSeed"
         puts $namd_file "constraints     on"
         puts $namd_file "consref         ../$output_prefix.pdb"
@@ -2821,18 +2894,19 @@ proc ::druggability::Prepare_system {} {
         #puts $namd_file "langevinTemp     300"
         puts $namd_file "langevinDamping  5"
         puts $namd_file "langevinHydrogen off"
-        puts $namd_file "extendedSystem  $output_prefix.xsc"
+        # puts $namd_file "extendedSystem  $output_prefix.xsc"
+        puts $namd_file "extendedSystem  eq1.xsc"
         puts $namd_file "wrapWater       on"
-        #puts $namd_file "wrapAll         on"
-        puts $namd_file "for \{set T 300\} \{\$T < 600\} \{incr T  10\} \{"
+        puts $namd_file "wrapAll         on"
+        puts $namd_file "for \{set T 300\} \{\$T < 500\} \{incr T  10\} \{"
         #puts $namd_file "    rescaleTemp      \$T;"
         puts $namd_file "    langevinTemp     \$T;"
 	      puts $namd_file "    run             1000;"
         puts $namd_file "\}"
-        #puts $namd_file "rescaleTemp      600;"
-        puts $namd_file "langevinTemp     600"
+        #puts $namd_file "rescaleTemp      500;"
+        puts $namd_file "langevinTemp     500"
         puts $namd_file "run             300000;"
-        puts $namd_file "for \{set T 570\} \{\$T >= 300\} \{incr T -30\} \{"
+        puts $namd_file "for \{set T 470\} \{\$T >= 300\} \{incr T -30\} \{"
         puts $namd_file "    langevinTemp     \$T;"
         puts $namd_file "	   run             1000;"
         puts $namd_file "\}"
@@ -2843,14 +2917,14 @@ proc ::druggability::Prepare_system {} {
         puts $namd_file "coordinates     $output_prefix.coor"
         puts $namd_file "structure       ../$output_prefix.psf"
         puts $namd_file "paraTypeCharmm  on"
-        puts $namd_file "parameters      ../parameters/par_all27_prot_lipid_na.inp"
-        if {$percent_acetipam > 0} {puts $namd_file "parameters      ../parameters/probe.prm"}
+        # puts $namd_file "parameters      ../parameters/par_all27_prot_lipid_na.inp"
+        # if {$percent_acetipam > 0} {puts $namd_file "parameters      ../parameters/probe.prm"}
         foreach par_filename $par_filenames {puts $namd_file "parameters      ../parameters/$par_filename"}
         puts $namd_file "outputname      $output_prefix"
         puts $namd_file "binaryoutput    no"
+        # puts $namd_file "binaryrestart   no"
         puts $namd_file "restartname     $output_prefix"
         puts $namd_file "restartfreq     2000"
-        puts $namd_file "binaryrestart   no"
         puts $namd_file "DCDfreq         2000"
         puts $namd_file "DCDfile         eq3.dcd"
         puts $namd_file "outputEnergies  2000"
@@ -2864,7 +2938,8 @@ proc ::druggability::Prepare_system {} {
         puts $namd_file "pairlistdist    12.0"
         puts $namd_file "margin          1.0"
         puts $namd_file "exclude         scaled1-4"
-        puts $namd_file "velocities      $output_prefix.vel"
+        # puts $namd_file "velocities      $output_prefix.vel"
+        puts $namd_file "velocities      eq2.vel"
         puts $namd_file "seed            $randomSeed"
         #puts $namd_file "constraints     on"
         #puts $namd_file "consref         ../$output_prefix.pdb"
@@ -2886,9 +2961,10 @@ proc ::druggability::Prepare_system {} {
         puts $namd_file "langevinPistonPeriod  100.0"
         puts $namd_file "langevinPistonDecay   50.0"
         puts $namd_file "langevinPistonTemp    300"
-        puts $namd_file "extendedSystem  $output_prefix.xsc"
+        # puts $namd_file "extendedSystem  $output_prefix.xsc"
+		puts $namd_file "extendedSystem  eq2.xsc"
         puts $namd_file "wrapWater       on"
-        #puts $namd_file "wrapAll         on"
+        puts $namd_file "wrapAll         on"
         puts $namd_file "run                  300000"
         close $namd_file
         puts $sh_file "\$NAMD eq3.conf > eq3.log"
@@ -2899,14 +2975,14 @@ proc ::druggability::Prepare_system {} {
       puts $namd_file "coordinates     $output_prefix.coor"
       puts $namd_file "structure       ../$output_prefix.psf"
       puts $namd_file "paraTypeCharmm  on"
-      puts $namd_file "parameters      ../parameters/par_all27_prot_lipid_na.inp"
-      if {$percent_acetipam > 0} {puts $namd_file "parameters      ../parameters/probe.prm"}
+      # puts $namd_file "parameters      ../parameters/par_all27_prot_lipid_na.inp"
+      # if {$percent_acetipam > 0} {puts $namd_file "parameters      ../parameters/probe.prm"}
       foreach par_filename $par_filenames {puts $namd_file "parameters      ../parameters/$par_filename"}
       puts $namd_file "outputname      $output_prefix"
       puts $namd_file "binaryoutput    no"
+      # puts $namd_file "binaryrestart   no"
       puts $namd_file "restartname     $output_prefix"
       puts $namd_file "restartfreq     2000"
-      puts $namd_file "binaryrestart   no"
       puts $namd_file "DCDfreq         2000"
       puts $namd_file "DCDfile         sim.dcd"
       puts $namd_file "outputEnergies  2000"
@@ -2920,7 +2996,8 @@ proc ::druggability::Prepare_system {} {
       puts $namd_file "pairlistdist    12.0"
       puts $namd_file "margin          1.0"
       puts $namd_file "exclude         scaled1-4"
-      puts $namd_file "velocities      $output_prefix.vel"
+      # puts $namd_file "velocities      $output_prefix.vel"
+      puts $namd_file "velocities      eq3.vel"
       puts $namd_file "seed            $randomSeed"
       puts $namd_file "PME             yes"
       puts $namd_file "PMEGridSpacing  1.0"
@@ -2937,31 +3014,32 @@ proc ::druggability::Prepare_system {} {
       puts $namd_file "langevinPistonPeriod  100.0"
       puts $namd_file "langevinPistonDecay   50.0"
       puts $namd_file "langevinPistonTemp    300"
-      puts $namd_file "extendedSystem  $output_prefix.xsc"
+      # puts $namd_file "extendedSystem  $output_prefix.xsc"
+	  puts $namd_file "extendedSystem  eq3.xsc"
       puts $namd_file "wrapWater       on"
-      #puts $namd_file "wrapAll         on"
+      puts $namd_file "wrapAll         on"
       puts $namd_file "run                  [expr $sim_length * 500000]"
       close $namd_file
       puts $sh_file "\$NAMD sim.conf > sim.log"
 
       set namd_file [open [file join "$outputdir" "$output_prefix$suffix" "simrestart.conf"] w]
-      puts $namd_file "coordinates     $output_prefix.coor"
+      puts $namd_file "coordinates     ../$output_prefix.pdb"
       puts $namd_file "structure       ../$output_prefix.psf"
       puts $namd_file "paraTypeCharmm  on"
-      puts $namd_file "parameters      ../parameters/par_all27_prot_lipid_na.inp"
-      if {$percent_acetipam > 0} {puts $namd_file "parameters      ../parameters/probe.prm"}
+      # puts $namd_file "parameters      ../parameters/par_all27_prot_lipid_na.inp"
+      # if {$percent_acetipam > 0} {puts $namd_file "parameters      ../parameters/probe.prm"}
       foreach par_filename $par_filenames {puts $namd_file "parameters      ../parameters/$par_filename"}
-      puts $namd_file "outputname      $output_prefix"
+      puts $namd_file "outputname      $output_prefix\_R2"
       puts $namd_file "binaryoutput    no"
+      # puts $namd_file "binaryrestart   no"
       puts $namd_file "restartname     $output_prefix"
       puts $namd_file "restartfreq     2000"
-      puts $namd_file "binaryrestart   no"
       puts $namd_file "DCDfreq         2000"
       puts $namd_file "# DON'T forget to rename DCD files incrementally for each restart"
-      puts $namd_file "DCDfile         sim1.dcd"
+      puts $namd_file "DCDfile         sim_R2.dcd"
       puts $namd_file "outputEnergies  2000"
       puts $namd_file "timestep        2.0"
-      puts $namd_file "firsttimestep   XXXXX this value is found in $output_prefix.coor"
+      puts $namd_file "firsttimestep   XXXXX this value is found in sim_restart.xsc"
       puts $namd_file "fullElectFrequency 2"
       puts $namd_file "nonbondedFreq      1"
       puts $namd_file "rigidBonds      all"
@@ -2971,7 +3049,8 @@ proc ::druggability::Prepare_system {} {
       puts $namd_file "pairlistdist    12.0"
       puts $namd_file "margin          1.0"
       puts $namd_file "exclude         scaled1-4"
-      puts $namd_file "velocities      $output_prefix.vel"
+      puts $namd_file "binCoordinates     sim_restart.coor"
+      puts $namd_file "binvelocities      sim_restart.vel"
       puts $namd_file "seed            $randomSeed"
       puts $namd_file "PME             yes"
       puts $namd_file "PMEGridSpacing  1.0"
@@ -2987,9 +3066,10 @@ proc ::druggability::Prepare_system {} {
       puts $namd_file "langevinPistonPeriod  100.0"
       puts $namd_file "langevinPistonDecay   50.0"
       puts $namd_file "langevinPistonTemp    300"
-      puts $namd_file "extendedSystem  $output_prefix.xsc"
+      # puts $namd_file "extendedSystem  $output_prefix.xsc"
+	  puts $namd_file "extendedSystem  ../$output_prefix$minfix/sim.xsc"
       puts $namd_file "wrapWater       on"
-      #puts $namd_file "wrapAll         on"
+      puts $namd_file "wrapAll         on"
       puts $namd_file "run             XXXXX"
       close $namd_file
       puts $sh_file "#\$NAMD simrestart.conf > simrestart.log"
@@ -3140,7 +3220,7 @@ proc drugui_usage { } {
   vmdcon -info "    -rotate <yes/No>"
   vmdcon -info "      (rotate molecule to minimize water volume)"
   vmdcon -info "    -padding <distance>"
-  vmdcon -info "      (minimum solvent box padding in all directions, default is 6 A)"
+  vmdcon -info "      (minimum solvent box padding in all directions, default is 10 A)"
   vmdcon -info "    -boundary <distance>"
   vmdcon -info "      (minimum distance between water/probe and solute, default is 2.4 A)"
   vmdcon -info "    -neutral <Yes/no>"
@@ -3286,6 +3366,7 @@ proc drugui_core {args} {
     set outdir [dict get $opts "-outdir"]
   }
   dict unset opts "-outdir"
+  if {![file exists $outdir]} {file mkdir $outdir}
 
   if {[dict exists $opts "-prefix"]} {
     set prefix [dict get $opts "-prefix"]
@@ -3375,7 +3456,7 @@ proc drugui_core {args} {
   }
   dict unset opts "-rotate"
 
-  set padding 6
+  set padding 10
   if {[dict exists $opts "-padding"]} {
     set padding [dict get $opts "-padding"]
   }
@@ -3470,7 +3551,7 @@ proc drugui_core {args} {
   set solvate_options [concat $solvate_options "+y [expr $padding_y + $pady]"]
   set solvate_options [concat $solvate_options "+z [expr $padding_z + $padz]"]
   if {$probes} {
-    set solvate_options [concat $solvate_options "-spdb $probepdb -spsf $probepsf -stop $probetop -ks \"$probekey\" -ws $probebox"]
+    set solvate_options [concat $solvate_options "-spdb \"$probepdb\" -spsf \"$probepsf\" -stop \"$probetop\" -ks \"$probekey\" -ws $probebox"]
   }
   if {$rotate} {
     set solvate_options [concat $solvate_options "-rotate -rotinc 10 -rotsel {all}"]
@@ -3936,32 +4017,45 @@ proc drugui_core {args} {
     lappend nonbonded "exclude         scaled1-4"
     set nonbonded [join $nonbonded "\n"]
 
+	set pbc_pme [cal_PBC_PME top]
+	set pbc_box [lindex $pbc_pme 0]
+	# regsub -all {\n} $pbc_box {\\n} pbc_box
+	set pme_size [lindex $pbc_pme 1]
+	# regsub -all {\n} $pme_size {\\n} pme_size
+
     loginfo $logfile "Simulation: Parameter files are copied into ./parameter folder."
     set minfix "_min"
     file mkdir "$outputname$minfix"
     set namd_file [open "$outputname$minfix/min.conf" w]
-    puts $namd_file "coordinates     ../$outputname.pdb"
-    puts $namd_file "structure       ../$outputname.psf"
+    puts $namd_file "coordinates     ../$prefix.pdb"
+    puts $namd_file "structure       ../$prefix.psf"
     puts $namd_file $parlines
     puts $namd_file "outputname      min"
     puts $namd_file "restartname     min_restart"
     puts $namd_file "binaryoutput    no"
-    puts $namd_file "restartfreq     10000"
-    puts $namd_file "binaryrestart   no"
+    # puts $namd_file "binaryrestart   no"
+    puts $namd_file "restartfreq     1000"
+    puts $namd_file "dcdfreq         1000"
+    puts $namd_file "xstFreq         1000"
+    puts $namd_file "outputEnergies  1000"
+    puts $namd_file "outputPressure  1000"
     puts $namd_file "timestep        1.0"
     puts $namd_file $nonbonded
     puts $namd_file "temperature     0"
     puts $namd_file "seed            12345"
     puts $namd_file "constraints     on"
-    puts $namd_file "consref         ../$outputname.pdb"
-    puts $namd_file "conskfile       ../$outputname.pdb"
+    puts $namd_file "consref         ../$prefix.pdb"
+    puts $namd_file "conskfile       ../$prefix.pdb"
     puts $namd_file "conskcol        B"
     puts $namd_file "constraintScaling  1.0"
+	puts $namd_file "$pbc_box"
     puts $namd_file "PME             yes"
-    puts $namd_file "PMEGridSpacing  1.0"
-    puts $namd_file "extendedSystem  ../$outputname.xsc"
+	puts $namd_file "$pme_size"
+    # puts $namd_file "PMEGridSpacing  1.0"
+    # puts $namd_file "extendedSystem  ../$output_prefix.xsc"
     puts $namd_file "wrapWater       on"
-    puts $namd_file "minimize        2000"
+    puts $namd_file "wrapAll         on"
+    puts $namd_file "minimize        10000"
     close $namd_file
     puts $sh_file "cd $outputname$minfix"
     puts $sh_file "namd2 min.conf > min.log"
@@ -3969,16 +4063,20 @@ proc drugui_core {args} {
     loginfo $logfile "Simulation: NAMD configuration files for minimization are written into folder $outputname$minfix."
     set simlines [list]
     lappend simlines "binaryoutput    no"
-    lappend simlines "restartfreq     20000"
-    lappend simlines "binaryrestart   no"
-    lappend simlines "DCDfreq         2000"
-    lappend simlines "outputEnergies  2000"
+    # lappend simlines "binaryrestart   no"
+    lappend simlines "restartfreq     10000"
+    lappend simlines "dcdfreq         10000"
+    lappend simlines "xstFreq         10000"
+    lappend simlines "outputEnergies  50000"
+    lappend simlines "outputPressure  50000"
+    lappend simlines "outputtiming  10000"
     lappend simlines "timestep        2.0"
     lappend simlines "fullElectFrequency 2"
     lappend simlines "nonbondedFreq      1"
     lappend simlines "rigidBonds      all"
     lappend simlines $nonbonded
     lappend simlines "wrapWater       on"
+    lappend simlines "wrapAll         on"
     set simlines [join $simlines "\n"]
     set simlines2 [list]
     lappend simlines2 "PME             yes"
@@ -3995,18 +4093,19 @@ proc drugui_core {args} {
 
     for {set i 1} {$i <= $nsim} {incr i} {
       # MKDIR for each simulation
-      if {$i == 1} {
-        set suffix "_sim"
-      } else {
-        set suffix "_sim$i"
-      }
+      # if {$i == 1} {
+        # set suffix "_sim"
+      # } else {
+        # set suffix "_sim$i"
+      # }
+      set suffix "_sim$i"
       file mkdir $outputname$suffix
       puts $sh_file "cd ../$outputname$suffix"
       set randomSeed [::tcl::mathfunc::int [expr rand() * 1000000]]
 
       set namd_file [open "$outputname$suffix/eq1.conf" w]
-      puts $namd_file "coordinates     ../$outputname$minfix/min.coor"
-      puts $namd_file "structure       ../$outputname.psf"
+      puts $namd_file "coordinates     ../$prefix$minfix/min.coor"
+      puts $namd_file "structure       ../$prefix.psf"
       puts $namd_file $parlines
       puts $namd_file "outputname      eq1"
       puts $namd_file "restartname     eq1_restart"
@@ -4015,14 +4114,15 @@ proc drugui_core {args} {
       puts $namd_file "temperature     100"
       puts $namd_file "seed            $randomSeed"
       puts $namd_file "constraints     on"
-      puts $namd_file "consref         ../$outputname$minfix/min.coor"
-      puts $namd_file "conskfile       ../$outputname.pdb"
+      puts $namd_file "consref         ../$prefix$minfix/min.coor"
+      puts $namd_file "conskfile       ../$prefix.pdb"
       puts $namd_file "conskcol        B"
       puts $namd_file "constraintScaling  0.5"
       puts $namd_file $simlines2
       puts $namd_file "langevinTemp     100"
       puts $namd_file "langevinPistonTemp    100"
-      puts $namd_file "extendedSystem  ../$outputname.xsc"
+      # puts $namd_file "extendedSystem  ../$prefix.xsc"
+	  puts $namd_file "extendedSystem  ../$prefix$minfix/min.xsc"
       puts $namd_file "reinitvels      100"
       puts $namd_file "for \{set T 100\} \{\$T < 300\} \{incr T 10\} \{"
       puts $namd_file "    langevinTemp      \$T;"
@@ -4040,7 +4140,7 @@ proc drugui_core {args} {
         set eqn 3
         set namd_file [open "$outputname$suffix/eq2.conf" w]
         puts $namd_file "coordinates     eq1.coor"
-        puts $namd_file "structure       ../$outputname.psf"
+        puts $namd_file "structure       ../$prefix.psf"
         puts $namd_file $parlines
         puts $namd_file "outputname      eq2"
         puts $namd_file "restartname     eq2_restart"
@@ -4049,8 +4149,8 @@ proc drugui_core {args} {
         puts $namd_file "velocities      eq1.vel"
         puts $namd_file "seed            $randomSeed"
         puts $namd_file "constraints     on"
-        puts $namd_file "consref         ../$outputname$minfix/min.coor"
-        puts $namd_file "conskfile       ../$outputname.pdb"
+        puts $namd_file "consref         ../$prefix$minfix/min.coor"
+        puts $namd_file "conskfile       ../$prefix.pdb"
         puts $namd_file "conskcol        B"
         puts $namd_file "constraintScaling  1.0"
         puts $namd_file "PME             yes"
@@ -4059,13 +4159,13 @@ proc drugui_core {args} {
         puts $namd_file "langevinDamping  5"
         puts $namd_file "langevinHydrogen off"
         puts $namd_file "extendedSystem  eq1.xsc"
-        puts $namd_file "for \{set T 300\} \{\$T < 600\} \{incr T  10\} \{"
+        puts $namd_file "for \{set T 300\} \{\$T < 500\} \{incr T  10\} \{"
         puts $namd_file "    langevinTemp     \$T;"
         puts $namd_file "    run             1000;"
         puts $namd_file "\}"
-        puts $namd_file "langevinTemp     600"
+        puts $namd_file "langevinTemp     500"
         puts $namd_file "run             300000;"
-        puts $namd_file "for \{set T 570\} \{\$T >= 300\} \{incr T -30\} \{"
+        puts $namd_file "for \{set T 470\} \{\$T >= 300\} \{incr T -30\} \{"
         puts $namd_file "    langevinTemp     \$T;"
         puts $namd_file "    run             1000;"
         puts $namd_file "\}"
@@ -4074,7 +4174,7 @@ proc drugui_core {args} {
 
         set namd_file [open "$outputname$suffix/eq3.conf" w]
         puts $namd_file "coordinates     eq2.coor"
-        puts $namd_file "structure       ../$outputname.psf"
+        puts $namd_file "structure       ../$prefix.psf"
         puts $namd_file $parlines
         puts $namd_file "outputname      eq3"
         puts $namd_file "restartname     eq3_restart"
@@ -4094,7 +4194,7 @@ proc drugui_core {args} {
 
       set namd_file [open "$outputname$suffix/sim.conf" w]
       puts $namd_file "coordinates     eq$eqn.coor"
-      puts $namd_file "structure       ../$outputname.psf"
+      puts $namd_file "structure       ../$prefix.psf"
       puts $namd_file $parlines
       puts $namd_file "outputname      sim"
       puts $namd_file "restartname     sim_restart"
@@ -4111,16 +4211,17 @@ proc drugui_core {args} {
       puts $sh_file "namd2 sim.conf > sim.log"
 
       set namd_file [open "$outputname$suffix/simrestart.conf" w]
-      puts $namd_file "coordinates     sim_restart.coor"
-      puts $namd_file "structure       ../$outputname.psf"
+      puts $namd_file "coordinates     ../$prefix.pdb"
+      puts $namd_file "structure       ../$prefix.psf"
       puts $namd_file $parlines
-      puts $namd_file "outputname      sim"
+      puts $namd_file "outputname      sim_R2"
       puts $namd_file "restartname     sim_restart"
       puts $namd_file "# DON'T forget to rename DCD files incrementally for each restart"
-      puts $namd_file "DCDfile         sim1.dcd"
-      puts $namd_file "firsttimestep   XXXXX this value is found in $outputname.coor"
+      puts $namd_file "DCDfile         sim_R2.dcd"
+      puts $namd_file "firsttimestep   XXXXX this value is found in sim_restart.xsc"
       puts $namd_file $simlines
-      puts $namd_file "velocities      sim_restart.vel"
+      puts $namd_file "binCoordinates     sim_restart.coor"
+      puts $namd_file "binVelocities      sim_restart.vel"
       puts $namd_file "seed            $randomSeed"
       puts $namd_file $simlines2
       puts $namd_file "langevinTemp     300"
@@ -4233,3 +4334,50 @@ proc drugui_test {prb} {
   mol modstyle 0 $molid Licorice 0.2
 
 }
+
+
+# calculates PME number from PBC length
+proc cal_pme {cell_length} {
+	for {set i 2} {$i < 10000} {incr i 1} {
+		set num $i
+		while {[expr $num%2]==0 && $num>0} {
+			set num [expr $num/2]
+		}
+		while {[expr $num%3]==0 && $num>0} {
+			set num [expr $num/3]
+		}
+		while {[expr $num%5]==0 && $num>0} {
+			set num [expr $num/5]
+		}
+		if { $num==1 && $i>=$cell_length } {
+			return $i
+			#break
+		}
+	}
+}
+# set cal_pme 57.5
+
+# calcute the PBC box and PME size for pdb
+proc cal_PBC_PME {{mol top}} {
+	set all [atomselect top all]
+	set center [measure center $all]
+	set minmax [measure minmax $all]
+	set center_x [lindex $center 0]
+	set center_y [lindex $center 1]
+	set center_z [lindex $center 2]
+	set min_x [lindex $minmax 0 0]
+	set max_x [lindex $minmax 1 0]
+	set min_y [lindex $minmax 0 1]
+	set max_y [lindex $minmax 1 1]
+	set min_z [lindex $minmax 0 2]
+	set max_z [lindex $minmax 1 2]
+	set length_x [expr $max_x-$min_x]
+	set length_y [expr $max_y-$min_y]
+	set length_z [expr $max_z-$min_z]
+  
+	set pbc_box "[format "cellBasisVector1 	%.2f 		0 		0 " $length_x]\n[format "cellBasisVector2 	0 		%.2f 		0 " $length_y]\n[format "cellBasisVector3 	0 		0 		%.2f " $length_z]\n[format "cellOrigin 			%.2f 	%.2f 	%.2f " $center_x $center_y $center_z]"
+	set pme_size "[format "PMEGridSizeX        %d" [cal_pme $length_x]]\n[format "PMEGridSizeY        %d" [cal_pme $length_y]]\n[format "PMEGridSizeZ        %d" [cal_pme $length_z]]"
+	
+	return [list $pbc_box $pme_size]
+}
+
