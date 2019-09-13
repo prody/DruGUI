@@ -14,6 +14,8 @@ Installation
   * Python_ 2.7
   * NumPy_ 1.3 or later
 
+.. _NAMD: http://www.ks.uiuc.edu/Research/namd/
+
 
 2. Download one of the following archive files:
 

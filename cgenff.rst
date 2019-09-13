@@ -3,12 +3,19 @@
 Incorporate CGenFF Molecules
 ============================
 
-DruGUI also has a command utility, :program:`drugui`
-for setting up a system containing molecules from
+DruGUI can also be used for setting up a system containing 
+other probe molecules, which can be obtained from the 
 `CHARMM General Force Field <http://mackerell.umaryland.edu/~kenno/cgenff/>`_.
+This cannot be achieved using the DruGUI window interface but
+DruGUI also has a command utility :program:`drugui` that can
+be run using the :guilabel:`Tk Console` in VMD_ as we show below.
 
-In VMD :guilabel:`Tk Console`, typing the following command, for example, will
-prepare a system with probe composition of 30% imidazole, 30% isopropanol,
+Likewise, simulations using these probes cannot be analysed using the DruGUI interface 
+but we can do this using command line tools instead. Please contact us for assistance 
+with this analysis. We will update the tutorial with instructions for this soon.
+
+In VMD, open and type the following command to
+prepare a system with a probe composition of 30% imidazole, 30% isopropanol,
 and 10% of each of acetate, acetamide, isopropylamine, and isobutane::
 
   % drugui mdm2.psf mdm2.pdb -IPRO 30 -IMID 30 -ACTT 10 -ACAM 10 -IPAM 10 -IBTN 10
