@@ -47,7 +47,7 @@ Options & Parameters
    For visualization purposes, you may select to output occupancy grids for
    hydrophobic, polar, charged, and water atoms.
 
-   Grids can be visualized using `Chimera Volume Viewer`_ or `VMD`_.
+   Grids can be visualized using `Chimera Volume Viewer`_ or VMD_.
 
 3. You may also select to evaluate grids immediately after their calculation.
    Details of this step is discussed in the next part.
