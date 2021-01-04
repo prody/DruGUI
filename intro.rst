@@ -1,7 +1,7 @@
 Introduction
 ============
 
-Druggability Suite is a `VMD`_ plugin GUI and a Python module developed
+Druggability Suite is a VMD_ plugin GUI and a Python module developed
 for setup and analysis of simulations described in [AB12]_.
 
 Installation
