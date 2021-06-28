@@ -400,7 +400,7 @@ def pickler(filename, obj=None, **kwargs):
                 obj.workdir = fileloc
 
             obj.set_logger(**kwargs)
-            if obj.__dict__.has_key('name'):
+            if 'name' in obj.__dict__:
                 obj.logger.info('{0:s} has been reloaded.'.format(obj.name))
             else:
                 print('{0:s} has been unpickled.'.format(filename))
@@ -1827,7 +1827,10 @@ class DIA(ABase):
             raise ProbeError('No hotspots found with binding free energy '
                              'below {0:.f} kcal/mol (~{0:.0f} folds '
                              'enrichment)'.format(delta_g, enrichment))
-        spots = zip(-probes.grid.array[which], which[0], which[1], which[2])
+        if sys.version_info[0] == 3:
+            spots = zip(-probes.grid.array[tuple(which)], which[0], which[1], which[2])
+        else:
+            spots = zip(-probes.grid.array[which], which[0], which[1], which[2])
         spots = sorted(spots)
         spots = np.array(spots)
         radii = np.array([probe.radius for probe in self._probes])
@@ -2308,7 +2311,11 @@ class DIA(ABase):
                         ilists[2].append(index[2]-k)
                         ilists[2].append(index[2]+k)
 
-        spots = zip(-self._all.grid.array[ilists], ilists[0], ilists[1], ilists[2])
+        if sys.version_info[0] == 3:
+            spots = zip(-self._all.grid.array[tuple(ilists)], ilists[0], ilists[1], ilists[2])
+        else:
+            spots = zip(-self._all.grid.array[ilists], ilists[0], ilists[1], ilists[2])
+
         spots = sorted(spots)
         spots = np.array(spots)
         spots = spots[spots[:, 0] < -population, :]
